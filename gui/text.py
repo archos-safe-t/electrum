@@ -18,6 +18,7 @@ class ElectrumGui:
 
         self.config = config
         self.network = daemon.network
+        self.preblockhash = self.network.get_pre_blockhash()
         storage = WalletStorage(config.get_wallet_path())
         if not storage.file_exists():
             print("Wallet not found. try 'electrum create'")
@@ -340,7 +341,7 @@ class ElectrumGui:
         else:
             password = None
         try:
-            tx = self.wallet.mktx([(TYPE_ADDRESS, self.str_recipient, amount)], password, self.config, fee)
+            tx = self.wallet.mktx(self.preblockhash, [(TYPE_ADDRESS, self.str_recipient, amount)], password, self.config, fee)
         except Exception as e:
             self.show_message(str(e))
             return

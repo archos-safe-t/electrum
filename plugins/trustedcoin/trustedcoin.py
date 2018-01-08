@@ -235,6 +235,26 @@ class Wallet_2fa(Multisig_Wallet):
     def get_user_id(self):
         return get_user_id(self.storage)
 
+    def get_max_amount(self, config, inputs, recipient, fee):
+        from electrum.transaction import Transaction
+        sendable = sum(map(lambda x:x['value'], inputs))
+        for i in inputs:
+            self.add_input_info(i)
+        xf = self.extra_fee(config)
+        _type, addr = recipient
+        if xf and sendable >= xf:
+            billing_address = self.billing_info['billing_address']
+            sendable -= xf
+            outputs = [(_type, addr, sendable),
+                       (TYPE_ADDRESS, billing_address, xf)]
+        else:
+            outputs = [(_type, addr, sendable)]
+        dummy_tx = Transaction.from_io(self.preblockhash, inputs, outputs)
+        if fee is None:
+            fee = self.estimate_fee(config, dummy_tx.estimated_size())
+        amount = max(0, sendable - fee)
+        return amount, fee
+
     def min_prepay(self):
         return min(self.price_per_tx.keys())
 
@@ -260,7 +280,7 @@ class Wallet_2fa(Multisig_Wallet):
         assert price <= 100000 * n
         return price
 
-    def make_unsigned_transaction(self, coins, outputs, config, fixed_fee=None,
+    def make_unsigned_transaction(self, preblockhash, coins, outputs, config, fixed_fee=None,
                                   change_addr=None, is_sweep=False):
         mk_tx = lambda o: Multisig_Wallet.make_unsigned_transaction(
             self, coins, o, config, fixed_fee, change_addr)

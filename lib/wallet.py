@@ -144,7 +144,7 @@ def sweep(privkeys, network, config, recipient, fee=None, imax=100):
     total = sum(i.get('value') for i in inputs)
     if fee is None:
         outputs = [(TYPE_ADDRESS, recipient, total)]
-        tx = Transaction.from_io(inputs, outputs)
+        tx = Transaction.from_io(network.get_pre_blockhash(), inputs, outputs)
         fee = config.estimate_fee(tx.estimated_size())
     if total - fee < 0:
         raise Exception(_('Not enough funds on address.') + '\nTotal: %d satoshis\nFee: %d'%(total, fee))
@@ -154,7 +154,7 @@ def sweep(privkeys, network, config, recipient, fee=None, imax=100):
     outputs = [(TYPE_ADDRESS, recipient, total - fee)]
     locktime = network.get_local_height()
 
-    tx = Transaction.from_io(inputs, outputs, locktime=locktime)
+    tx = Transaction.from_io(network.get_pre_blockhash(), inputs, outputs, locktime=locktime)
     tx.BIP_LI01_sort()
     tx.set_rbf(True)
     tx.sign(keypairs)
@@ -1205,7 +1205,7 @@ class Abstract_Wallet(PrintError):
     def dust_threshold(self):
         return dust_threshold(self.network)
 
-    def make_unsigned_transaction(self, inputs, outputs, config, fixed_fee=None,
+    def make_unsigned_transaction(self, preblockhash, inputs, outputs, config, fixed_fee=None,
                                   change_addr=None, is_sweep=False):
         # check outputs
         i_max = None
@@ -1213,7 +1213,7 @@ class Abstract_Wallet(PrintError):
             _type, data, value = o
             if _type == TYPE_ADDRESS:
                 if not is_address(data):
-                    raise Exception("Invalid bitcoin address: {}".format(data))
+                    raise BaseException("Invalid bitcoindiamond address:".format(data))
             if value == '!':
                 if i_max is not None:
                     raise Exception("More than one output set to spend max")
@@ -1260,20 +1260,20 @@ class Abstract_Wallet(PrintError):
             # Let the coin chooser select the coins to spend
             max_change = self.max_change_outputs if self.multiple_change else 1
             coin_chooser = coinchooser.get_coin_chooser(config)
-            tx = coin_chooser.make_tx(inputs, outputs, change_addrs[:max_change],
+            tx = coin_chooser.make_tx(preblockhash, inputs, outputs, change_addrs[:max_change],
                                       fee_estimator, self.dust_threshold())
         else:
             # FIXME?? this might spend inputs with negative effective value...
             sendable = sum(map(lambda x:x['value'], inputs))
             _type, data, value = outputs[i_max]
             outputs[i_max] = (_type, data, 0)
-            tx = Transaction.from_io(inputs, outputs[:])
+            tx = Transaction.from_io(preblockhash, inputs, outputs[:])
             fee = fee_estimator(tx.estimated_size())
             amount = sendable - tx.output_value() - fee
             if amount < 0:
                 raise NotEnoughFunds()
             outputs[i_max] = (_type, data, amount)
-            tx = Transaction.from_io(inputs, outputs[:])
+            tx = Transaction.from_io(preblockhash, inputs, outputs[:])
 
         # Sort the inputs and outputs deterministically
         tx.BIP_LI01_sort()
@@ -1282,9 +1282,9 @@ class Abstract_Wallet(PrintError):
         run_hook('make_unsigned_transaction', self, tx)
         return tx
 
-    def mktx(self, outputs, password, config, fee=None, change_addr=None, domain=None):
+    def mktx(self, preblockhash, outputs, password, config, fee=None, change_addr=None, domain=None):
         coins = self.get_spendable_coins(domain, config)
-        tx = self.make_unsigned_transaction(coins, outputs, config, fee, change_addr)
+        tx = self.make_unsigned_transaction(self.preblockhash, coins, outputs, config, fee, change_addr)
         self.sign_transaction(tx, password)
         return tx
 
@@ -1383,7 +1383,7 @@ class Abstract_Wallet(PrintError):
                 age = tx_age
         return age > age_limit
 
-    def bump_fee(self, tx, delta):
+    def bump_fee(self, preblockhash, tx, delta):
         if tx.is_final():
             raise CannotBumpFee(_('Cannot bump fee') + ': ' + _('transaction is final'))
         tx = Transaction(tx.serialize())
@@ -1420,11 +1420,11 @@ class Abstract_Wallet(PrintError):
         if delta > 0:
             raise CannotBumpFee(_('Cannot bump fee') + ': ' + _('could not find suitable outputs'))
         locktime = self.get_local_height()
-        tx_new = Transaction.from_io(inputs, outputs, locktime=locktime)
+        tx_new = Transaction.from_io(preblockhash, inputs, outputs, locktime=locktime)
         tx_new.BIP_LI01_sort()
         return tx_new
 
-    def cpfp(self, tx, fee):
+    def cpfp(self, preblockhash, tx, fee):
         txid = tx.txid()
         for i, o in enumerate(tx.outputs()):
             otype, address, value = o
@@ -1441,7 +1441,7 @@ class Abstract_Wallet(PrintError):
         outputs = [(TYPE_ADDRESS, address, value - fee)]
         locktime = self.get_local_height()
         # note: no need to call tx.BIP_LI01_sort() here - single input/output
-        return Transaction.from_io(inputs, outputs, locktime=locktime)
+        return Transaction.from_io(preblockhash, inputs, outputs, locktime=locktime)
 
     def add_input_info(self, txin):
         address = txin['address']

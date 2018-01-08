@@ -49,7 +49,7 @@ extras_require['full'] = extras_require['hardware'] + extras_require['fast']
 
 
 setup(
-    name="Electrum",
+    name='Electrum BCD',
     version=version.ELECTRUM_VERSION,
     install_requires=requirements,
     extras_require=extras_require,
@@ -86,10 +86,10 @@ setup(
     },
     scripts=['electrum'],
     data_files=data_files,
-    description="Lightweight Bitcoin Wallet",
-    author="Thomas Voegtlin",
-    author_email="thomasv@electrum.org",
-    license="MIT Licence",
-    url="https://electrum.org",
-    long_description="""Lightweight Bitcoin Wallet"""
+    description='Lightweight BitcoinDiamond Wallet',
+    author='Thomas Voegtlin',
+    author_email='thomasv@electrum.org',
+    license='MIT Licence',
+    url='https://electrum.org',
+    long_description='Lightweight BitcoinDiamond Wallet'
 )

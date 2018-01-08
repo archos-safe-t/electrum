@@ -1,19 +1,19 @@
-name: electrum
+name: electrum bitcoindiamond
 version: master
-summary: Bitcoin thin client
+summary: Bitcoin bitcoindiamond thin client
 description: |
-  Lightweight Bitcoin client
+  Lightweight BitcoinDiamond client
 
 grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: strict
 
 apps:
-  electrum:
+  electrum bitcoindiamond:
     command: desktop-launch electrum
     plugs: [network, network-bind, x11, unity7]
 
 parts:
-  electrum:
+  electrum bitcoindiamond:
     source: .
     plugin: python
     python-version: python3

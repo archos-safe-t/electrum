@@ -74,7 +74,7 @@ class TxDialog(QDialog, MessageBoxMixin):
         # sign operation the signatures are lost.
         self.tx = copy.deepcopy(tx)
         try:
-            self.tx.deserialize()
+            data = self.tx.deserialize()
         except BaseException as e:
             raise SerializationError(e)
         self.main_window = parent

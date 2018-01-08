@@ -33,7 +33,7 @@ class AmountEdit(MyLineEdit):
         self.extra_precision = 0
 
     def decimal_point(self):
-        return 8
+        return 7
 
     def max_precision(self):
         return self.decimal_point() + self.extra_precision
@@ -86,7 +86,14 @@ class BTCAmountEdit(AmountEdit):
         self.decimal_point = decimal_point
 
     def _base_unit(self):
-        return decimal_point_to_base_unit_name(self.decimal_point())
+        p = self.decimal_point()
+        if p == 7:
+            return 'BCD'
+        if p == 4:
+            return 'mBCD'
+        if p == 1:
+            return 'bits'
+        raise Exception('Unknown base unit')
 
     def get_amount(self):
         try:
@@ -117,7 +124,12 @@ class FeerateEdit(BTCAmountEdit):
         self.extra_precision = FEERATE_PRECISION
 
     def _base_unit(self):
-        return 'sat/byte'
+        p = self.decimal_point()
+        if p == 1:
+            return 'mBCD/kB'
+        if p == 0:
+            return 'sat/byte'
+        raise Exception('Unknown base unit')
 
     def get_amount(self):
         sat_per_byte_amount = BTCAmountEdit.get_amount(self)

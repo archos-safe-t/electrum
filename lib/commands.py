@@ -95,6 +95,7 @@ class Commands:
         self.config = config
         self.wallet = wallet
         self.network = network
+        self.preblockhash = self.network.get_pre_blockhash()
         self._callback = callback
 
     def _run(self, method, args, password_getter):
@@ -227,7 +228,7 @@ class Commands:
                 txin['num_sig'] = 1
 
         outputs = [(TYPE_ADDRESS, x['address'], int(x['value'])) for x in outputs]
-        tx = Transaction.from_io(inputs, outputs, locktime=locktime)
+        tx = Transaction.from_io(self.preblockhash, inputs, outputs, locktime=locktime)
         tx.sign(keypairs)
         return tx.as_dict()
 
@@ -418,7 +419,7 @@ class Commands:
             final_outputs.append((TYPE_ADDRESS, address, amount))
 
         coins = self.wallet.get_spendable_coins(domain, self.config)
-        tx = self.wallet.make_unsigned_transaction(coins, final_outputs, self.config, fee, change_addr)
+        tx = self.wallet.make_unsigned_transaction(self.preblockhash, coins, final_outputs, self.config, fee, change_addr)
         if locktime != None: 
             tx.locktime = locktime
         if rbf is None:
@@ -693,8 +694,8 @@ param_descriptions = {
     'pubkey': 'Public key',
     'message': 'Clear text message. Use quotes if it contains spaces.',
     'encrypted': 'Encrypted message',
-    'amount': 'Amount to be sent (in BTC). Type \'!\' to send the maximum available.',
-    'requested_amount': 'Requested amount (in BTC).',
+    'amount': 'Amount to be sent (in BCD). Type \'!\' to send the maximum available.',
+    'requested_amount': 'Requested amount (in BCD).',
     'outputs': 'list of ["address", amount]',
     'redeem_script': 'redeem script (hexadecimal)',
 }

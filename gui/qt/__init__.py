@@ -134,13 +134,13 @@ class ElectrumGui:
             submenu.addAction(_("Close"), window.close)
         m.addAction(_("Dark/Light"), self.toggle_tray_icon)
         m.addSeparator()
-        m.addAction(_("Exit Electrum"), self.close)
+        m.addAction(_("Exit Electrum BCD"), self.close)
 
     def tray_icon(self):
         if self.dark_icon:
-            return QIcon(':icons/electrum_dark_icon.png')
+            return QIcon(':icons/electrum.png')
         else:
-            return QIcon(':icons/electrum_light_icon.png')
+            return QIcon(':icons/electrum.png')
 
     def toggle_tray_icon(self):
         self.dark_icon = not self.dark_icon

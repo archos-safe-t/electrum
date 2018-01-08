@@ -26,13 +26,79 @@
 import hashlib
 import hmac
 
-from .util import bfh, bh2u, BitcoinException, print_error, assert_bytes, to_bytes, inv_dict
+from .util import bfh, bh2u, BitcoinException, print_error, assert_bytes, to_bytes, inv_dict, to_string
 from . import version
 from . import segwit_addr
 from . import constants
 from . import ecc
 from .crypto import Hash, sha256, hash_160
+import ecdsa
+import pyaes
+import x13bcd_hash
 
+def read_json(filename, default):
+    path = os.path.join(os.path.dirname(__file__), filename)
+    try:
+        with open(path, 'r') as f:
+            r = json.loads(f.read())
+    except:
+        r = default
+    return r
+
+
+
+
+# Version numbers for BIP32 extended keys
+# standard: xprv, xpub
+# segwit in p2sh: yprv, ypub
+# native segwit: zprv, zpub
+XPRV_HEADERS = {
+    'standard': 0x0488ade4,
+    'p2wpkh-p2sh': 0x049d7878,
+    'p2wsh-p2sh': 0x295b005,
+    'p2wpkh': 0x4b2430c,
+    'p2wsh': 0x2aa7a99
+}
+XPUB_HEADERS = {
+    'standard': 0x0488b21e,
+    'p2wpkh-p2sh': 0x049d7cb2,
+    'p2wsh-p2sh': 0x295b43f,
+    'p2wpkh': 0x4b24746,
+    'p2wsh': 0x2aa7ed3
+}
+
+
+class NetworkConstants:
+
+    @classmethod
+    def set_mainnet(cls):
+        cls.TESTNET = False
+        cls.WIF_PREFIX = 0x80
+        cls.ADDRTYPE_P2PKH = 0
+        cls.ADDRTYPE_P2SH = 5
+        cls.SEGWIT_HRP = "bc"
+        cls.GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+        cls.DEFAULT_PORTS = {'t': '50001', 's': '50002'}
+        cls.DEFAULT_SERVERS = read_json('servers.json', {})
+        cls.CHECKPOINTS = read_json('checkpoints.json', [])
+        # Bitcoin Diamond fork block specification
+        cls.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT = 495867
+        cls.BITCOIN_DIAMOND_FORK_BLOCK_HASH = '458535405446053c9db6a16ec7e5b022429fedde605ce81bb24c6cfe6f43fc89'
+
+    @classmethod
+    def set_testnet(cls):
+        cls.TESTNET = True
+        cls.WIF_PREFIX = 0xef
+        cls.ADDRTYPE_P2PKH = 111
+        cls.ADDRTYPE_P2SH = 196
+        cls.SEGWIT_HRP = "tb"
+        cls.GENESIS = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
+        cls.DEFAULT_PORTS = {'t':'51001', 's':'51002'}
+        cls.DEFAULT_SERVERS = read_json('servers_testnet.json', {})
+        cls.CHECKPOINTS = read_json('checkpoints_testnet.json', [])
+
+
+NetworkConstants.set_mainnet()
 
 ################################## transactions
 
@@ -146,6 +212,10 @@ def push_script(data: str) -> str:
 def add_number_to_script(i: int) -> bytes:
     return bfh(push_script(script_num_to_hex(i)))
 
+def bcd_Hash(x):
+    x = to_bytes(x, 'utf8')
+    out = bytes(x13bcd_hash.getPoWHash(x))
+    return out
 
 hash_encode = lambda x: bh2u(x[::-1])
 hash_decode = lambda x: bfh(x)[::-1]

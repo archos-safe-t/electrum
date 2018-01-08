@@ -159,7 +159,7 @@ class ElectrumWindow(App):
         self._trigger_update_history()
 
     def _get_bu(self):
-        return self.electrum_config.get('base_unit', 'mBTC')
+        return self.electrum_config.get('base_unit', 'mBCD')
 
     def _set_bu(self, value):
         assert value in base_units.keys()
@@ -194,7 +194,7 @@ class ElectrumWindow(App):
         rate = self.fx.exchange_rate()
         if rate.is_nan():
             return ''
-        satoshis = int(pow(10,8) * Decimal(fiat_amount) / Decimal(rate))
+        satoshis = int(pow(10,7) * Decimal(fiat_amount) / Decimal(rate))
         return format_satoshis_plain(satoshis, self.decimal_point())
 
     def get_amount(self, amount_str):
@@ -249,7 +249,7 @@ class ElectrumWindow(App):
 
         App.__init__(self)#, **kwargs)
 
-        title = _('Electrum App')
+        title = _('Electrum BCD App')
         self.electrum_config = config = kwargs.get('config', None)
         self.language = config.get('language', 'en')
         self.network = network = kwargs.get('network', None)
@@ -508,7 +508,7 @@ class ElectrumWindow(App):
             else:
                 self.load_wallet(wallet)
         else:
-            Logger.debug('Electrum: Wallet not found or action needed. Launching install wizard')
+            Logger.debug('Electrum-Diamond: Wallet not found or action needed. Launching install wizard')
 
             def launch_wizard():
                 storage = WalletStorage(path, manual_upgrades=True)
@@ -732,7 +732,7 @@ class ElectrumWindow(App):
             icon = (os.path.dirname(os.path.realpath(__file__))
                     + '/../../' + self.icon)
             notification.notify('Electrum', message,
-                            app_icon=icon, app_name='Electrum')
+                            app_icon=icon, app_name='Electrum BCD')
         except ImportError:
             Logger.Error('Notification: needs plyer; `sudo pip install plyer`')
 

@@ -918,10 +918,11 @@ class Network(util.DaemonThread):
             raise Exception(interface.mode)
         # If not finished, get the next header
         if next_height:
-            if interface.mode == 'catch_up' and interface.tip > next_height + 50:
-                self.request_chunk(interface, next_height // 2016)
-            else:
-                self.request_header(interface, next_height)
+            self.request_header(interface, next_height)
+            # if interface.mode == 'catch_up' and interface.tip > next_height + 50:
+            #     self.request_chunk(interface, next_height // 2016)
+            # else:
+            #     self.request_header(interface, next_height)
         else:
             interface.mode = 'default'
             interface.request = None
@@ -1053,6 +1054,9 @@ class Network(util.DaemonThread):
             host, port, protocol, proxy, auto_connect = self.get_parameters()
             host, port, protocol = server.split(':')
             self.set_parameters(host, port, protocol, proxy, auto_connect)
+
+    def get_pre_blockhash(self):
+        return self.blockchain().get_hash(self.blockchain().height())          
 
     def get_local_height(self):
         return self.blockchain().height()

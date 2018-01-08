@@ -19,6 +19,14 @@ from .util import *
 from .password_dialog import PasswordLayout, PasswordLayoutForHW, PW_NEW
 
 
+class GoBack(Exception):
+    pass
+
+MSG_GENERATING_WAIT = _("Electrum BCD is generating your addresses, please wait...")
+MSG_ENTER_ANYTHING = _("Please enter a seed phrase, a master key, a list of "
+                       "BitcoinDiamond addresses, or a list of private keys")
+MSG_ENTER_SEED_OR_MPK = _("Please enter a seed phrase or a master key (xpub or xprv):")
+MSG_COSIGNER = _("Please enter the master public key of cosigner #%d:")
 MSG_ENTER_PASSWORD = _("Choose a password to encrypt your wallet keys.") + '\n'\
                      + _("Leave this field empty if you want to disable encryption.")
 MSG_HW_STORAGE_ENCRYPTION = _("Set wallet file encryption.") + '\n'\
@@ -94,7 +102,7 @@ class InstallWizard(QDialog, MessageBoxMixin, BaseWizard):
     def __init__(self, config, app, plugins, storage):
         BaseWizard.__init__(self, config, plugins, storage)
         QDialog.__init__(self, None)
-        self.setWindowTitle('Electrum  -  ' + _('Install Wizard'))
+        self.setWindowTitle('Electrum BCD -  ' + _('Install Wizard'))
         self.app = app
         self.config = config
         # Set for base base class
@@ -165,7 +173,7 @@ class InstallWizard(QDialog, MessageBoxMixin, BaseWizard):
         hbox2.addWidget(self.pw_e)
         hbox2.addStretch()
         vbox.addLayout(hbox2)
-        self.set_layout(vbox, title=_('Electrum wallet'))
+        self.set_layout(vbox, title=_('Electrum BCD wallet'))
 
         wallet_folder = os.path.dirname(self.storage.path)
 
@@ -544,7 +552,7 @@ class InstallWizard(QDialog, MessageBoxMixin, BaseWizard):
         return None
 
     def init_network(self, network):
-        message = _("Electrum communicates with remote servers to get "
+        message = _("Electrum BCD communicates with remote servers to get "
                   "information about your transactions and addresses. The "
                   "servers all fulfill the same purpose only differing in "
                   "hardware. In most cases you simply want to let Electrum "
