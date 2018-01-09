@@ -35,7 +35,7 @@ requirements = python3crystax==3.6, android, openssl, plyer, kivy==master, libse
 
 # (str) Presplash of the application
 #presplash.filename = %(source.dir)s/gui/kivy/theming/splash.png
-presplash.filename = %(source.dir)s/icons/electrum_presplash.png
+presplash.filename = %(source.dir)s/icons/electrum_bcd_presplash.png
 
 # (str) Icon of the application
 icon.filename = %(source.dir)s/icons/electrum_launcher.png

@@ -138,9 +138,9 @@ class ElectrumGui:
 
     def tray_icon(self):
         if self.dark_icon:
-            return QIcon(':icons/electrum.png')
+            return QIcon(':icons/electrum_bcd_dark_icon.png')
         else:
-            return QIcon(':icons/electrum.png')
+            return QIcon(':icons/electrum_bcd_light_icon.png')
 
     def toggle_tray_icon(self):
         self.dark_icon = not self.dark_icon
