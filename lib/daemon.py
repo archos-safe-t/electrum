@@ -95,7 +95,6 @@ def get_server(config):
         # Sleep a bit and try again; it might have just been started
         time.sleep(1.0)
 
-
 def get_rpc_credentials(config):
     rpc_user = config.get('rpcuser', None)
     rpc_password = config.get('rpcpassword', None)
