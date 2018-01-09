@@ -163,7 +163,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if self.config.get("is_maximized"):
             self.showMaximized()
 
-        self.setWindowIcon(QIcon(":icons/electrum.png"))
+        self.setWindowIcon(QIcon(":icons/electrum_bcd.png"))
         self.init_menubar()
 
         wrtabs = weakref.proxy(tabs)
@@ -2690,7 +2690,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.fee_unit = self.config.get('fee_unit', 0)
         fee_unit_label = HelpLabel(_('Fee Unit') + ':', '')
         fee_unit_combo = QComboBox()
-        fee_unit_combo.addItems([_('sat/byte'), _('mBCD/kB')])
+        # fee_unit_combo.addItems([_('sat/byte'), _('mBCD/kB')])
+        fee_unit_combo.addItems([_('sat/byte')])
         fee_unit_combo.setCurrentIndex(self.fee_unit)
         def on_fee_unit(x):
             self.fee_unit = x
@@ -2973,18 +2974,17 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         fiat_address_checkbox.stateChanged.connect(on_fiat_address)
         ex_combo.currentIndexChanged.connect(on_exchange)
 
-        fiat_widgets = []
-        fiat_widgets.append((QLabel(_('Fiat currency')), ccy_combo))
-        fiat_widgets.append((QLabel(_('Show history rates')), hist_checkbox))
-        fiat_widgets.append((QLabel(_('Show capital gains in history')), hist_capgains_checkbox))
-        fiat_widgets.append((QLabel(_('Show Fiat balance for addresses')), fiat_address_checkbox))
-        fiat_widgets.append((QLabel(_('Source')), ex_combo))
+        # fiat_widgets = []
+        # fiat_widgets.append((QLabel(_('Fiat currency')), ccy_combo))
+        # fiat_widgets.append((QLabel(_('Show history rates')), hist_checkbox))
+        # fiat_widgets.append((QLabel(_('Show Fiat balance for addresses')), fiat_address_checkbox))
+        # fiat_widgets.append((QLabel(_('Source')), ex_combo))
 
         tabs_info = [
             (fee_widgets, _('Fees')),
             (tx_widgets, _('Transactions')),
             (gui_widgets, _('Appearance')),
-            (fiat_widgets, _('Fiat')),
+            # (fiat_widgets, _('Fiat')),
             (id_widgets, _('Identity')),
         ]
         for widgets, name in tabs_info:
