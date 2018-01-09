@@ -3,6 +3,8 @@
     <file>icons/electrum_bcd.png</file>
     <file>icons/electrum_bcd_light_icon.png</file>
     <file>icons/electrum_bcd_dark_icon.png</file>
+    <file>icons/electrum_bcd@0.5x.png</file>
+    <file>icons/electrum_bcd@2x.png</file>
     <file>icons/clock1.png</file>
     <file>icons/clock2.png</file>
     <file>icons/clock3.png</file>
