@@ -103,8 +103,8 @@ NetworkConstants.set_mainnet()
 ################################## transactions
 
 COINBASE_MATURITY = 100
-COIN = 100000000
-TOTAL_COIN_SUPPLY_LIMIT_IN_BTC = 21000000
+COIN = 10000000
+TOTAL_COIN_SUPPLY_LIMIT_IN_BTC = 210000000
 
 # supported types of transaction outputs
 TYPE_ADDRESS = 0
