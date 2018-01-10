@@ -110,6 +110,7 @@
 This is a follow-up to the 3.0.4 release, which did not completely fix
 issue #3374. Users should upgrade to 3.0.5.
 
+ * Support BitcoinDiamond 
  * The JSONRPC interface is password protected
  * JSONRPC commands are disabled if the GUI is running, except 'ping',
    which is used to determine if a GUI is already running
@@ -552,7 +553,7 @@ issue #3374. Users should upgrade to 3.0.5.
    in DNS (OpenAlias). The identity of the requestor is verified using
    DNSSEC.
  * Payment requests signed with OpenAlias keys can be shared as
-   bitcoin: URIs, if they are simple (a single address-type
+   bitcoindiamond: URIs, if they are simple (a single address-type
    output). The BIP21 URI scheme is extended with 'name', 'sig',
    'time', 'exp'.
  * Arbitrary m-of-n multisig wallets are supported (n<=15).
@@ -626,7 +627,7 @@ issue #3374. Users should upgrade to 3.0.5.
  * A Search Box is available in the GUI (Ctrl-S)
  * Payment requests have an expiration date and can be exported to
    BIP70 files.
- * file: scheme support in BIP72 URIs: "bitcoin:?r=file:///..."
+ * file: scheme support in BIP72 URIs: "bitcoindiamond:?r=file:///..."
  * Own addresses are shown in green in the Transaction dialog.
  * Address History dialog.
  * The OpenAlias plugin was improved.
