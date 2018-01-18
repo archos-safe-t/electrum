@@ -84,6 +84,7 @@ class NetworkConstants:
         # Bitcoin Diamond fork block specification
         cls.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT = 495867
         cls.BITCOIN_DIAMOND_FORK_BLOCK_HASH = '458535405446053c9db6a16ec7e5b022429fedde605ce81bb24c6cfe6f43fc89'
+        cls.BITCOIN_DIAMOND_CHECKPOINT_INDEX = 495867 // 2016
 
     @classmethod
     def set_testnet(cls):

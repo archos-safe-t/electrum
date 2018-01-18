@@ -457,7 +457,7 @@ def format_satoshis_plain(x, decimal_point = 7):
     """Display a satoshi amount scaled.  Always uses a '.' as a decimal
     point and has no thousands separator"""
     scale_factor = pow(10, decimal_point)
-    return "{:.8f}".format(Decimal(x) / scale_factor).rstrip('0').rstrip('.')
+    return "{:.7f}".format(Decimal(x) / scale_factor).rstrip('0').rstrip('.')
 
 
 def format_satoshis(x, num_zeros=0, decimal_point=7, precision=None, is_diff=False, whitespaces=False):

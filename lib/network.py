@@ -794,9 +794,11 @@ class Network(util.DaemonThread):
         if not connect:
             self.connection_down(interface.server)
             return
-        # If not finished, get the next chunk
-        if index >= len(blockchain.checkpoints) and blockchain.height() < interface.tip:
-            self.request_chunk(interface, index+1)
+        if interface.blockchain.height() < interface.tip:
+            if index < bitcoin.NetworkConstants.BITCOIN_DIAMOND_CHECKPOINT_INDEX - 1:
+                self.request_chunk(interface, index+1)
+            else:
+                self.request_header(interface, interface.blockchain.height()+1)
         else:
             interface.mode = 'default'
             interface.print_error('catch up done', blockchain.height())
@@ -918,11 +920,11 @@ class Network(util.DaemonThread):
             raise Exception(interface.mode)
         # If not finished, get the next header
         if next_height:
-            self.request_header(interface, next_height)
-            # if interface.mode == 'catch_up' and interface.tip > next_height + 50:
-            #     self.request_chunk(interface, next_height // 2016)
-            # else:
-            #     self.request_header(interface, next_height)
+            # self.request_header(interface, next_height)
+            if interface.mode == 'catch_up' and interface.tip > next_height + 50 and next_height < ((bitcoin.NetworkConstants.BITCOIN_DIAMOND_CHECKPOINT_INDEX-1) * 2016):
+                self.request_chunk(interface, next_height // 2016)
+            else:
+                self.request_header(interface, next_height)
         else:
             interface.mode = 'default'
             interface.request = None
@@ -962,8 +964,16 @@ class Network(util.DaemonThread):
     def init_headers_file(self):
         b = self.blockchains[0]
         filename = b.path()
-        length = 80 * len(constants.net.CHECKPOINTS) * 2016
-        if not os.path.exists(filename) or os.path.getsize(filename) < length:
+        if os.path.exists(filename):
+            with open(filename, 'rb') as f:
+                if f.read(80) == b'\x00' * 80:
+                    is_fake_headers = True
+                    self.print_error("fake headers, will synchronize again")
+                else:
+                    is_fake_headers = False
+
+        length = 80 * len(bitcoin.NetworkConstants.CHECKPOINTS) * 2016
+        if not os.path.exists(filename) or os.path.getsize(filename) < length or is_fake_headers:
             with open(filename, 'wb') as f:
                 if length>0:
                     f.seek(length-1)
