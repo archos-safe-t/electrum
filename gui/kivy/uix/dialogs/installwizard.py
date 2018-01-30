@@ -72,7 +72,7 @@ Builder.load_string('''
             size: Window.size
 
     crcontent: crcontent
-    # add electrum icon
+    # add electrum bcd icon
     BoxLayout:
         orientation: 'vertical' if self.width < self.height else 'horizontal'
         padding:
@@ -87,7 +87,7 @@ Builder.load_string('''
             height: self.minimum_height
             Label:
                 color: root.text_color
-                text: 'ELECTRUM'
+                text: 'ELECTRUM BCD'
                 size_hint: 1, None
                 height: self.texture_size[1] if self.opacity else 0
                 font_size: '33sp'

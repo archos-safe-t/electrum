@@ -137,7 +137,7 @@ class ElectrumWindow(App):
         self.send_screen.set_URI(uri)
 
     def on_new_intent(self, intent):
-        if intent.getScheme() != 'bitcoin':
+        if intent.getScheme() != 'bitcoindiamond':
             return
         uri = intent.getDataString()
         self.set_URI(uri)
@@ -159,7 +159,7 @@ class ElectrumWindow(App):
         self._trigger_update_history()
 
     def _get_bu(self):
-        return self.electrum_config.get('base_unit', 'mBCD')
+        return self.electrum_config.get('base_unit', 'BCD')
 
     def _set_bu(self, value):
         assert value in base_units.keys()
@@ -703,7 +703,7 @@ class ElectrumWindow(App):
         addr = str(self.send_screen.screen.address) or self.wallet.dummy_address()
         outputs = [(TYPE_ADDRESS, addr, '!')]
         try:
-            tx = self.wallet.make_unsigned_transaction(inputs, outputs, self.electrum_config)
+            tx = self.wallet.make_unsigned_transaction(self.network.get_pre_blockhash(), inputs, outputs, self.electrum_config)
         except NoDynamicFeeEstimates as e:
             Clock.schedule_once(lambda dt, bound_e=e: self.show_error(str(bound_e)))
             return ''

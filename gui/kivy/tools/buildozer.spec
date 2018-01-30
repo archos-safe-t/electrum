@@ -1,7 +1,7 @@
 [app]
 
 # (str) Title of your application
-title = Electrum
+title = Electrum BCD
 
 # (str) Package name
 package.name = Electrum
@@ -31,14 +31,14 @@ version.filename = %(source.dir)s/contrib/versions.py
 #version = 1.9.8
 
 # (list) Application requirements
-requirements = python3crystax==3.6, android, openssl, plyer, kivy==master, libsecp256k1
+requirements = python3crystax==3.6, android, openssl, plyer, kivy==master, libsecp256k1, x13bcd_hash==1.0.6
 
 # (str) Presplash of the application
 #presplash.filename = %(source.dir)s/gui/kivy/theming/splash.png
 presplash.filename = %(source.dir)s/icons/electrum_bcd_presplash.png
 
 # (str) Icon of the application
-icon.filename = %(source.dir)s/icons/electrum_launcher.png
+icon.filename = %(source.dir)s/icons/electrum_bcd_launcher.png
 
 # (str) Supported orientation (one of landscape, portrait or all)
 orientation = portrait

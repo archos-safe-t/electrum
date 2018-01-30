@@ -1,7 +1,7 @@
 #:import VERSION electrum.version.ELECTRUM_VERSION
 
 Popup:
-    title: _("About Electrum")
+    title: _("About Electrum BCD")
     BoxLayout:
         orientation: 'vertical'
         spacing: '10dp'
@@ -22,23 +22,13 @@ Popup:
                 text: "MIT Licence"
                 size_hint_x: 0.6
             TopLabel:
-                text: _('Homepage')
-                size_hint_x: 0.4
-            TopLabel:
-                markup: True
-                text: '[color=6666ff][ref=x]https://electrum.org[/ref][/color]'
-                on_ref_press:
-                    import webbrowser
-                    webbrowser.open("https://electrum.org")
-                size_hint_x: 0.6
-            TopLabel:
                 text: _('Developers')
                 size_hint_x: 0.4
             TopLabel:
-                text: '\n'.join(['Thomas Voegtlin', 'Neil Booth', 'Akshay Arora'])
+                text: "Electrum BCD Develope Organzation"
                 size_hint_x: 0.6
         TopLabel:
-            text: _('Distributed by Electrum Technologies GmbH')
+            text: _('Distributed by Electrum BCD Technologies')
             padding: '0dp', '20dp'
         Widget:
             size_hint: None, 0.5

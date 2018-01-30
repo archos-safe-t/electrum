@@ -17,7 +17,7 @@ Builder.load_string('''
 
 <SettingsDialog@Popup>
     id: settings
-    title: _('Electrum Settings')
+    title: _('Electrum BCD Settings')
     disable_pin: False
     use_encryption: False
     BoxLayout:
@@ -44,7 +44,7 @@ Builder.load_string('''
                 SettingsItem:
                     bu: app.base_unit
                     title: _('Denomination') + ': ' + self.bu
-                    description: _("Base unit for Bitcoin amounts.")
+                    description: _("Base unit for BitcoinDiamond amounts.")
                     action: partial(root.unit_dialog, self)
                 CardSeparator
                 SettingsItem:
@@ -52,6 +52,12 @@ Builder.load_string('''
                     title: _('Fiat Currency') + ': ' + self.status
                     description: _("Display amounts in fiat currency.")
                     action: partial(root.fx_dialog, self)
+                CardSeparator
+                SettingsItem:
+                    status: root.fee_status()
+                    title: _('Fees') + ': ' + self.status
+                    description: _("Fees paid to the BitcoinDiamond miners.")
+                    action: partial(root.fee_dialog, self)
                 CardSeparator
                 SettingsItem:
                     status: 'ON' if bool(app.plugins.get('labels')) else 'OFF'
