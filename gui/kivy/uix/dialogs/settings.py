@@ -90,12 +90,14 @@ Builder.load_string('''
                     description: _("Send your change to separate addresses.")
                     message: _('Send excess coins to change addresses')
                     action: partial(root.boolean_dialog, 'use_change', _('Use change addresses'), self.message)
-                CardSeparator
-                SettingsItem:
-                    status: root.coinselect_status()
-                    title: _('Coin selection') + ': ' + self.status
-                    description: "Coin selection method"
-                    action: partial(root.coinselect_dialog, self)
+
+                # disabled: there is currently only one coin selection policy
+                #CardSeparator
+                #SettingsItem:
+                #    status: root.coinselect_status()
+                #    title: _('Coin selection') + ': ' + self.status
+                #    description: "Coin selection method"
+                #    action: partial(root.coinselect_dialog, self)
 ''')
 
 
@@ -202,10 +204,7 @@ class SettingsDialog(Factory.Popup):
         d.open()
 
     def fee_status(self):
-        if self.config.get('dynamic_fees', True):
-            return fee_levels[self.config.get('fee_level', 2)]
-        else:
-            return self.app.format_amount_and_units(self.config.fee_per_kb()) + '/kB'
+        return self.config.get_fee_status()
 
     def fee_dialog(self, label, dt):
         if self._fee_dialog is None:

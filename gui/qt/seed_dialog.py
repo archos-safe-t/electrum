@@ -35,7 +35,7 @@ from .qrtextedit import ShowQRTextEdit, ScanQRTextEdit
 def seed_warning_msg(seed):
     return ''.join([
         "<p>",
-        _("Please save these %d words on paper (order is important). "),
+        _("Please save these {0} words on paper (order is important). "),
         _("This seed will allow you to recover your wallet in case "
           "of computer failure."),
         "</p>",
@@ -45,7 +45,7 @@ def seed_warning_msg(seed):
         "<li>" + _("Never type it on a website.") + "</li>",
         "<li>" + _("Do not store it electronically.") + "</li>",
         "</ul>"
-    ]) % len(seed.split())
+    ]).format(len(seed.split()))
 
 
 class SeedLayout(QVBoxLayout):
@@ -63,8 +63,8 @@ class SeedLayout(QVBoxLayout):
         if 'bip39' in self.options:
             def f(b):
                 self.is_seed = (lambda x: bool(x)) if b else self.saved_is_seed
-                self.on_edit()
                 self.is_bip39 = b
+                self.on_edit()
                 if b:
                     msg = ' '.join([
                         '<b>' + _('Warning') + ':</b>  ',
@@ -92,11 +92,10 @@ class SeedLayout(QVBoxLayout):
         self.options = options
         if title:
             self.addWidget(WWLabel(title))
+        self.seed_e = ButtonsTextEdit()
         if seed:
-            self.seed_e = ShowQRTextEdit()
             self.seed_e.setText(seed)
         else:
-            self.seed_e = ScanQRTextEdit()
             self.seed_e.setTabChangesFocus(True)
             self.is_seed = is_seed
             self.saved_is_seed = self.is_seed
@@ -153,11 +152,11 @@ class SeedLayout(QVBoxLayout):
 
 
 class KeysLayout(QVBoxLayout):
-    def __init__(self, parent=None, title=None, is_valid=None):
+    def __init__(self, parent=None, title=None, is_valid=None, allow_multi=False):
         QVBoxLayout.__init__(self)
         self.parent = parent
         self.is_valid = is_valid
-        self.text_e = ScanQRTextEdit()
+        self.text_e = ScanQRTextEdit(allow_multi=allow_multi)
         self.text_e.textChanged.connect(self.on_edit)
         self.addWidget(WWLabel(title))
         self.addWidget(self.text_e)
