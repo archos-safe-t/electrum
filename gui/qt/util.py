@@ -251,14 +251,14 @@ def line_dialog(parent, title, label, ok_label, default=None):
     if dialog.exec_():
         return txt.text()
 
-def text_dialog(parent, title, label, ok_label, default=None):
+def text_dialog(parent, title, label, ok_label, default=None, allow_multi=False):
     from .qrtextedit import ScanQRTextEdit
     dialog = WindowModalDialog(parent, title)
     dialog.setMinimumWidth(500)
     l = QVBoxLayout()
     dialog.setLayout(l)
     l.addWidget(QLabel(label))
-    txt = ScanQRTextEdit()
+    txt = ScanQRTextEdit(allow_multi=allow_multi)
     if default:
         txt.setText(default)
     l.addWidget(txt)
@@ -478,8 +478,12 @@ class MyTreeWidget(QTreeWidget):
             self.pending_update = True
         else:
             self.setUpdatesEnabled(False)
+            scroll_pos = self.verticalScrollBar().value()
             self.on_update()
             self.setUpdatesEnabled(True)
+            # To paint the list before resetting the scroll position
+            self.parent.app.processEvents()
+            self.verticalScrollBar().setValue(scroll_pos)
         if self.current_filter:
             self.filter(self.current_filter)
 
@@ -634,6 +638,40 @@ class ColorScheme:
     def update_from_widget(widget):
         if ColorScheme.has_dark_background(widget):
             ColorScheme.dark_scheme = True
+
+
+class AcceptFileDragDrop:
+    def __init__(self, file_type=""):
+        assert isinstance(self, QWidget)
+        self.setAcceptDrops(True)
+        self.file_type = file_type
+
+    def validateEvent(self, event):
+        if not event.mimeData().hasUrls():
+            event.ignore()
+            return False
+        for url in event.mimeData().urls():
+            if not url.toLocalFile().endswith(self.file_type):
+                event.ignore()
+                return False
+        event.accept()
+        return True
+
+    def dragEnterEvent(self, event):
+        self.validateEvent(event)
+
+    def dragMoveEvent(self, event):
+        if self.validateEvent(event):
+            event.setDropAction(Qt.CopyAction)
+
+    def dropEvent(self, event):
+        if self.validateEvent(event):
+            for url in event.mimeData().urls():
+                self.onFileAdded(url.toLocalFile())
+
+    def onFileAdded(self, fn):
+        raise NotImplementedError()
+
 
 if __name__ == "__main__":
     app = QApplication([])

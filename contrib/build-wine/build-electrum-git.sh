@@ -3,10 +3,6 @@
 NAME_ROOT=electrum
 PYTHON_VERSION=3.5.4
 
-if [ "$#" -gt 0 ]; then
-    BRANCH="$1"
-fi
-
 # These settings probably don't need any change
 export WINEPREFIX=/opt/wine64
 export PYTHONDONTWRITEBYTECODE=1
@@ -43,8 +39,13 @@ done
 popd
 
 pushd electrum
+if [ ! -z "$1" ]; then
+    git checkout $1
+fi
+
 VERSION=`git describe --tags`
 echo "Last commit: $VERSION"
+find -exec touch -d '2000-11-11T11:11:11+00:00' {} +
 popd
 
 rm -rf $WINEPREFIX/drive_c/electrum
@@ -54,7 +55,8 @@ cp -r electrum-locale/locale $WINEPREFIX/drive_c/electrum/lib/
 cp electrum-icons/icons_rc.py $WINEPREFIX/drive_c/electrum/gui/qt/
 
 # Install frozen dependencies
-$PYTHON -m pip install -r ../../requirements.txt
+$PYTHON -m pip install -r ../../deterministic-build/requirements.txt
+$PYTHON -m pip install -r ../../deterministic-build/requirements-hw.txt
 
 pushd $WINEPREFIX/drive_c/electrum
 $PYTHON setup.py install
@@ -69,7 +71,7 @@ wine "C:/python$PYTHON_VERSION/scripts/pyinstaller.exe" --noconfirm --ascii --na
 
 # set timestamps in dist, in order to make the installer reproducible
 pushd dist
-find  -type f  -exec touch -d '2000-11-11T11:11:11+00:00' {} +
+find -exec touch -d '2000-11-11T11:11:11+00:00' {} +
 popd
 
 # build NSIS installer
