@@ -70,6 +70,7 @@ XPUB_HEADERS = {
 
 
 class NetworkConstants:
+    CHUNK_SIZE = 2016
 
     @classmethod
     def set_mainnet(cls):
@@ -78,12 +79,22 @@ class NetworkConstants:
         cls.ADDRTYPE_P2PKH = 38
         cls.ADDRTYPE_P2SH = 23
         cls.SEGWIT_HRP = "btg"
-        cls.HEADERS_URL = "https://headers.electrum.org/blockchain_headers"
+        cls.HEADERS_URL = "https://headers.bitcoingold.org/blockchain_headers"
         cls.GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
         cls.DEFAULT_PORTS = {'t': '50001', 's': '50002'}
         cls.DEFAULT_SERVERS = read_json('servers.json', {})
         cls.CHECKPOINTS = read_json('checkpoints.json', [])
         cls.FORK_HEIGHT = 491407
+        cls.PREMINE_SIZE = 8000
+        cls.HEADER_SIZE = 1487
+        cls.HEADER_SIZE_LEGACY = 141
+        cls.POW_LIMIT = 0x0007ffffffff0000000000000000000000000000000000000000000000000000
+        cls.POW_LIMIT_START = 0x0000000fffff0000000000000000000000000000000000000000000000000000
+        cls.POW_LIMIT_LEGACY = 0x00000000ffff0000000000000000000000000000000000000000000000000000
+        cls.POW_AVERAGING_WINDOW = 30
+        cls.POW_MAX_ADJUST_DOWN = 32
+        cls.POW_MAX_ADJUST_UP = 16
+        cls.POW_TARGET_SPACING = 10 * 60
 
     @classmethod
     def set_testnet(cls):
@@ -92,14 +103,68 @@ class NetworkConstants:
         cls.ADDRTYPE_P2PKH = 111
         cls.ADDRTYPE_P2SH = 196
         cls.SEGWIT_HRP = "tbtg"
-        cls.HEADERS_URL = "https://headers.electrum.org/testnet_headers"
+        cls.HEADERS_URL = "https://headers.bitcoingold.org/testnet_headers"
         cls.GENESIS = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
-        cls.DEFAULT_PORTS = {'t':'51001', 's':'51002'}
+        cls.DEFAULT_PORTS = {'t': '51001', 's': '51002'}
         cls.DEFAULT_SERVERS = read_json('servers_testnet.json', {})
         cls.CHECKPOINTS = read_json('checkpoints_testnet.json', [])
+        cls.FORK_HEIGHT = 3000
+        cls.PREMINE_SIZE = 3000
+        cls.HEADER_SIZE = 1487
+        cls.HEADER_SIZE_LEGACY = 141
+        cls.POW_LIMIT = 0x0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        cls.POW_LIMIT_START = 0x0000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        cls.POW_LIMIT_LEGACY = 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        cls.POW_AVERAGING_WINDOW = 30
+        cls.POW_MAX_ADJUST_DOWN = 32
+        cls.POW_MAX_ADJUST_UP = 16
+        cls.POW_TARGET_SPACING = 10 * 60
 
 
 NetworkConstants.set_mainnet()
+
+
+def averaging_window_timespan():
+    return NetworkConstants.POW_AVERAGING_WINDOW * NetworkConstants.POW_TARGET_SPACING
+
+
+def min_actual_timespan():
+    return (averaging_window_timespan() * (100 - NetworkConstants.POW_MAX_ADJUST_UP)) // 100
+
+
+def max_actual_timespan():
+    return (averaging_window_timespan() * (100 + NetworkConstants.POW_MAX_ADJUST_DOWN)) // 100
+
+
+def is_postfork(height):
+    return height >= NetworkConstants.FORK_HEIGHT
+
+
+def needs_retarget(height):
+    return is_postfork(height) or (height % NetworkConstants.CHUNK_SIZE == 0)
+
+
+def get_header_size(height):
+    return NetworkConstants.HEADER_SIZE if height >= NetworkConstants.FORK_HEIGHT \
+        else NetworkConstants.HEADER_SIZE_LEGACY
+
+
+def get_powlimit(height):
+    if height < NetworkConstants.FORK_HEIGHT:
+        pow_limit = NetworkConstants.POW_LIMIT_LEGACY
+    elif height < (NetworkConstants.FORK_HEIGHT + NetworkConstants.PREMINE_SIZE):
+        pow_limit = NetworkConstants.POW_LIMIT
+    elif height < (NetworkConstants.FORK_HEIGHT + NetworkConstants.PREMINE_SIZE + NetworkConstants.POW_AVERAGING_WINDOW):
+        pow_limit = NetworkConstants.POW_LIMIT_START
+    else:
+        pow_limit = NetworkConstants.POW_LIMIT
+
+    return pow_limit
+
+
+def hex_to_int(s):
+    return int('0x' + bh2u(s[::-1]), 16)
+
 
 ################################## transactions
 
@@ -883,7 +948,7 @@ def _CKD_priv(k, c, s, is_prime):
 # This function allows us to find the nth public key, as long as n is
 #  non-negative. If n is negative, we need the master private key to find it.
 def CKD_pub(cK, c, n):
-    if n & BIP32_PRIME: raise
+    if n & BIP32_PRIME: raise BaseException('No prime')
     return _CKD_pub(cK, c, bfh(rev_hex(int_to_hex(n,4))))
 
 # helper function, callable with arbitrary string
