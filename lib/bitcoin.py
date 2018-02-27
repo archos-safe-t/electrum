@@ -36,6 +36,7 @@ from .util import bfh, bh2u, to_string
 from . import version
 from .util import print_error, InvalidPassword, assert_bytes, to_bytes, inv_dict
 from . import segwit_addr
+from struct import unpack_from
 
 def read_json(filename, default):
     path = os.path.join(os.path.dirname(__file__), filename)
@@ -75,6 +76,7 @@ class NetworkConstants:
     @classmethod
     def set_mainnet(cls):
         cls.TESTNET = False
+        cls.REGTEST = False
         cls.WIF_PREFIX = 0x80
         cls.ADDRTYPE_P2PKH = 38
         cls.ADDRTYPE_P2SH = 23
@@ -99,6 +101,7 @@ class NetworkConstants:
     @classmethod
     def set_testnet(cls):
         cls.TESTNET = True
+        cls.REGTEST = False
         cls.WIF_PREFIX = 0xef
         cls.ADDRTYPE_P2PKH = 111
         cls.ADDRTYPE_P2SH = 196
@@ -118,6 +121,31 @@ class NetworkConstants:
         cls.POW_AVERAGING_WINDOW = 30
         cls.POW_MAX_ADJUST_DOWN = 32
         cls.POW_MAX_ADJUST_UP = 16
+        cls.POW_TARGET_SPACING = 10 * 60
+
+    @classmethod
+    def set_regtest(cls):
+        cls.TESTNET = False
+        cls.REGTEST = True
+        cls.WIF_PREFIX = 0xef
+        cls.ADDRTYPE_P2PKH = 111
+        cls.ADDRTYPE_P2SH = 196
+        cls.SEGWIT_HRP = "btg"
+        cls.HEADERS_URL = "https://headers.bitcoingold.org/blockchain_headers"
+        cls.GENESIS = "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
+        cls.DEFAULT_PORTS = {'t': '50001', 's': '50002'}
+        cls.DEFAULT_SERVERS = read_json('servers.json', {})
+        cls.CHECKPOINTS = read_json('checkpoints_regtest.json', [])
+        cls.FORK_HEIGHT = 3000
+        cls.PREMINE_SIZE = 10
+        cls.HEADER_SIZE = 177
+        cls.HEADER_SIZE_LEGACY = 141
+        cls.POW_LIMIT = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        cls.POW_LIMIT_START = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        cls.POW_LIMIT_LEGACY = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        cls.POW_AVERAGING_WINDOW = 30
+        cls.POW_MAX_ADJUST_DOWN = 16
+        cls.POW_MAX_ADJUST_UP = 32
         cls.POW_TARGET_SPACING = 10 * 60
 
 
@@ -293,6 +321,19 @@ def var_int(i):
         return "fe"+int_to_hex(i,4)
     else:
         return "ff"+int_to_hex(i,8)
+
+
+def var_int_read(value, start):
+    size = value[start]
+    start += 1
+
+    if size == 253:
+        (size,) = unpack_from('<H', value, start)
+    elif size == 254:
+        (size,) = unpack_from('<I', value, start)
+    elif size == 255:
+        (size,) = unpack_from('<Q', value, start)
+    return size
 
 
 def op_push(i):

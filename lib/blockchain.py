@@ -73,14 +73,18 @@ def serialize_header(header, legacy=False):
     if legacy:
         s += rev_hex(header.get('nonce'))[:8]
     else:
-        solution = header.get('solution')
+        sbytes = bytes.fromhex(rev_hex(header.get('solution')))
+        size = var_int_read(sbytes, 0)
+
         s += rev_hex(header.get('nonce')) \
-            + rev_hex(solution)
+            + rev_hex(hash_encode(sbytes[:(size + 1)]))
 
     return s
 
 
 def deserialize_header(header, height):
+    solution_size = var_int_read(header, 140)
+
     h = dict(
         block_height=height,
         version=hex_to_int(header[0:4]),
@@ -90,7 +94,7 @@ def deserialize_header(header, height):
         timestamp=hex_to_int(header[100:104]),
         bits=hash_encode(header[104:108]),
         nonce=hash_encode(header[108:140]),
-        solution=hash_encode(header[140:])
+        solution=hash_encode(header[140:(140 + solution_size + 1)])
     )
 
     return h
@@ -143,9 +147,9 @@ class Blockchain(util.PrintError):
     """
     Manages blockchain headers and their verification
     """
-    FORK_BYTE_OFFSET = NetworkConstants.FORK_HEIGHT * NetworkConstants.HEADER_SIZE_LEGACY
 
     def __init__(self, config, checkpoint, parent_id):
+        self.fork_byte_offset = NetworkConstants.FORK_HEIGHT * NetworkConstants.HEADER_SIZE_LEGACY
         self.config = config
         # interface catching up
         self.catch_up = None
@@ -214,11 +218,11 @@ class Blockchain(util.PrintError):
                 full_size = (size + checkpoint_size)
 
                 # Check fork boundary crossing
-                if full_size <= self.FORK_BYTE_OFFSET:
+                if full_size <= self.fork_byte_offset:
                     self._size = size // NetworkConstants.HEADER_SIZE_LEGACY
                 else:
-                    prb = (self.FORK_BYTE_OFFSET - checkpoint_size) // NetworkConstants.HEADER_SIZE_LEGACY
-                    pob = (full_size - self.FORK_BYTE_OFFSET) // NetworkConstants.HEADER_SIZE
+                    prb = (self.fork_byte_offset - checkpoint_size) // NetworkConstants.HEADER_SIZE_LEGACY
+                    pob = (full_size - self.fork_byte_offset) // NetworkConstants.HEADER_SIZE
                     self._size = prb + pob
         else:
             self._size = 0
@@ -254,7 +258,6 @@ class Blockchain(util.PrintError):
 
             # Check retarget
             if needs_retarget(height):
-                # target = self.get_target(height // NetworkConstants.CHUNK_SIZE - 1, height, headers)
                 target = self.get_target(index - 1, height, headers)
 
             self.verify_header(header, prev_hash, target)
@@ -418,17 +421,21 @@ class Blockchain(util.PrintError):
 
     def get_target(self, index, height, headers=None):
         if NetworkConstants.TESTNET:
-            return 0
-        if height < 1 or index < 0:
-            return NetworkConstants.POW_LIMIT_LEGACY
-        if 0 <= index < len(self.checkpoints):
+            new_target = 0
+        elif height == 0:
+            new_target = NetworkConstants.POW_LIMIT_LEGACY
+        elif 0 <= index < len(self.checkpoints):
             h, t = self.checkpoints[index]
-            return t
-
-        if is_postfork(height):
+            new_target = t
+        elif is_postfork(height):
             new_target = self.get_postfork_target(height, headers)
         else:
-            new_target = self.get_prefork_target(index)
+            if NetworkConstants.REGTEST:
+                last = self.read_header(height - 1)
+                bits = last.get('bits')
+                new_target = self.bits_to_target(int(bits, 16))
+            else:
+                new_target = self.get_prefork_target(index)
 
         return new_target
 
@@ -444,11 +451,12 @@ class Blockchain(util.PrintError):
         actual_timespan = min(actual_timespan, target_timespan * 4)
 
         new_target = min(NetworkConstants.POW_LIMIT_LEGACY, (target * actual_timespan) // target_timespan)
+
         return new_target
 
     def get_postfork_target(self, height, headers=None):
         # Premine
-        if height < NetworkConstants.FORK_HEIGHT + NetworkConstants.PREMINE_SIZE:
+        if (height < NetworkConstants.FORK_HEIGHT + NetworkConstants.PREMINE_SIZE) or NetworkConstants.REGTEST:
             new_target = NetworkConstants.POW_LIMIT
             # Initial start (reduced difficulty)
         elif height < NetworkConstants.FORK_HEIGHT + NetworkConstants.PREMINE_SIZE + NetworkConstants.POW_AVERAGING_WINDOW:
@@ -528,14 +536,15 @@ class Blockchain(util.PrintError):
         return ret
 
     def target_to_bits(self, target):
-        c = ("%064x" % target)[2:]
-        while c[:2] == '00' and len(c) > 6:
-            c = c[2:]
-        bitsN, bitsBase = len(c) // 2, int('0x' + c[:6], 16)
-        if bitsBase >= 0x800000:
-            bitsN += 1
-            bitsBase >>= 8
-        return bitsN << 24 | bitsBase
+        nbits = target.bit_length()
+        # Round up to next 8-bits
+        nbits = ((nbits + 7) & ~0x7)
+        exponent = (int(nbits / 8) & 0xff)
+        coefficient = (target >> (nbits - 24)) & 0xffffff
+        if coefficient & 0x800000:
+            coefficient >>= 8
+            exponent += 1
+        return (exponent << 24) | coefficient
 
     def can_connect(self, header, check_height=True):
         height = header['block_height']
