@@ -71,7 +71,7 @@ XPUB_HEADERS = {
 
 
 class NetworkConstants:
-    CHUNK_SIZE = 2016
+    CHUNK_SIZE = 252
 
     @classmethod
     def set_mainnet(cls):
@@ -97,6 +97,7 @@ class NetworkConstants:
         cls.POW_MAX_ADJUST_DOWN = 32
         cls.POW_MAX_ADJUST_UP = 16
         cls.POW_TARGET_SPACING = 10 * 60
+        cls.POW_TARGET_TIMESPAN_LEGACY = 14 * 24 * 60 * 60
 
     @classmethod
     def set_testnet(cls):
@@ -122,6 +123,7 @@ class NetworkConstants:
         cls.POW_MAX_ADJUST_DOWN = 32
         cls.POW_MAX_ADJUST_UP = 16
         cls.POW_TARGET_SPACING = 10 * 60
+        cls.POW_TARGET_TIMESPAN_LEGACY = 14 * 24 * 60 * 60
 
     @classmethod
     def set_regtest(cls):
@@ -147,6 +149,7 @@ class NetworkConstants:
         cls.POW_MAX_ADJUST_DOWN = 16
         cls.POW_MAX_ADJUST_UP = 32
         cls.POW_TARGET_SPACING = 10 * 60
+        cls.POW_TARGET_TIMESPAN_LEGACY = 14 * 24 * 60 * 60
 
 
 NetworkConstants.set_mainnet()
@@ -169,7 +172,11 @@ def is_postfork(height):
 
 
 def needs_retarget(height):
-    return is_postfork(height) or (height % NetworkConstants.CHUNK_SIZE == 0)
+    return is_postfork(height) or (height % difficulty_adjustment_interval() == 0)
+
+
+def difficulty_adjustment_interval():
+    return NetworkConstants.POW_TARGET_TIMESPAN_LEGACY / NetworkConstants.POW_TARGET_SPACING
 
 
 def get_header_size(height):

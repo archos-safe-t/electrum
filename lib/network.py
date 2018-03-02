@@ -964,7 +964,7 @@ class Network(util.DaemonThread):
         filename = b.path()
         b.update_size()
 
-        length = len(NetworkConstants.CHECKPOINTS) * NetworkConstants.CHUNK_SIZE
+        length = len(NetworkConstants.CHECKPOINTS) * difficulty_adjustment_interval()
         if not os.path.exists(filename) or b.size() < length:
             offset, header_size = b.get_offset(length)
 
@@ -1093,4 +1093,4 @@ class Network(util.DaemonThread):
             f.write(json.dumps(cp, indent=4))
 
     def max_checkpoint(self):
-        return max(0, len(NetworkConstants.CHECKPOINTS) * NetworkConstants.CHUNK_SIZE - 1)
+        return max(0, len(NetworkConstants.CHECKPOINTS) * difficulty_adjustment_interval() - 1)

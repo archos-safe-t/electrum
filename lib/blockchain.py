@@ -73,18 +73,13 @@ def serialize_header(header, legacy=False):
     if legacy:
         s += rev_hex(header.get('nonce'))[:8]
     else:
-        sbytes = bytes.fromhex(rev_hex(header.get('solution')))
-        size = var_int_read(sbytes, 0)
-
         s += rev_hex(header.get('nonce')) \
-            + rev_hex(hash_encode(sbytes[:(size + 1)]))
+             + rev_hex(header.get('solution'))
 
     return s
 
 
 def deserialize_header(header, height):
-    solution_size = var_int_read(header, 140)
-
     h = dict(
         block_height=height,
         version=hex_to_int(header[0:4]),
@@ -94,7 +89,7 @@ def deserialize_header(header, height):
         timestamp=hex_to_int(header[100:104]),
         bits=hash_encode(header[104:108]),
         nonce=hash_encode(header[108:140]),
-        solution=hash_encode(header[140:(140 + solution_size + 1)])
+        solution=hash_encode(header[140:])
     )
 
     return h
@@ -241,10 +236,9 @@ class Blockchain(util.PrintError):
         if int('0x' + _hash, 16) > target:
             raise BaseException("insufficient proof of work: %s vs target %s" % (int('0x' + _hash, 16), target))
 
-    def verify_chunk(self, index, data):
+    def verify_chunk(self, height, data):
         size = len(data)
         offset = 0
-        height = index * NetworkConstants.CHUNK_SIZE
         prev_hash = self.get_hash(height-1)
 
         ser_chunks = ''
@@ -257,8 +251,8 @@ class Blockchain(util.PrintError):
             header = deserialize_header(raw_header, height)
 
             # Check retarget
-            if needs_retarget(height):
-                target = self.get_target(index - 1, height, headers)
+            if needs_retarget(height) or target == 0:
+                target = self.get_target(height, headers)
 
             self.verify_header(header, prev_hash, target)
 
@@ -277,8 +271,7 @@ class Blockchain(util.PrintError):
             filename += '.gz'
         return os.path.join(d, filename)
 
-    def save_chunk(self, index, chunk):
-        height = index * NetworkConstants.CHUNK_SIZE
+    def save_chunk(self, height, chunk):
         delta = height - self.checkpoint
 
         if delta < 0:
@@ -287,15 +280,17 @@ class Blockchain(util.PrintError):
 
         offset, header_size = self.get_offset(height)
 
-        self.write(chunk, offset, index > len(self.checkpoints))
+        self.write(chunk, offset, height // difficulty_adjustment_interval() > len(self.checkpoints))
         self.swap_with_parent()
 
     def swap_with_parent(self):
         if self.parent_id is None:
             return
+
         parent_branch_size = self.parent().height() - self.checkpoint + 1
         if parent_branch_size >= self.size():
             return
+
         self.print_error("swap", self.checkpoint, self.parent_id)
         parent_id = self.parent_id
         checkpoint = self.checkpoint
@@ -411,37 +406,37 @@ class Blockchain(util.PrintError):
             return '0000000000000000000000000000000000000000000000000000000000000000'
         elif height == 0:
             return NetworkConstants.GENESIS
-        elif height < len(self.checkpoints) * NetworkConstants.CHUNK_SIZE:
-            assert (height + 1) % NetworkConstants.CHUNK_SIZE == 0, height
-            index = height // NetworkConstants.CHUNK_SIZE
+        elif height < len(self.checkpoints) * difficulty_adjustment_interval():
+            assert (height + 1) % difficulty_adjustment_interval() == 0, height
+            index = height // difficulty_adjustment_interval()
             h, t = self.checkpoints[index]
             return h
         else:
             return hash_header(self.read_header(height), height)
 
-    def get_target(self, index, height, headers=None):
+    def get_target(self, height, headers=None):
         if NetworkConstants.TESTNET:
             new_target = 0
         elif height == 0:
             new_target = NetworkConstants.POW_LIMIT_LEGACY
-        elif 0 <= index < len(self.checkpoints):
-            h, t = self.checkpoints[index]
+        elif height % difficulty_adjustment_interval() == 0 and 0 <= ((height // difficulty_adjustment_interval()) - 1) < len(self.checkpoints):
+            h, t = self.checkpoints[((height // difficulty_adjustment_interval()) - 1)]
             new_target = t
         elif is_postfork(height):
             new_target = self.get_postfork_target(height, headers)
         else:
-            if NetworkConstants.REGTEST:
+            if NetworkConstants.REGTEST or height % difficulty_adjustment_interval() != 0:
                 last = self.read_header(height - 1)
                 bits = last.get('bits')
                 new_target = self.bits_to_target(int(bits, 16))
             else:
-                new_target = self.get_prefork_target(index)
+                new_target = self.get_prefork_target(height)
 
         return new_target
 
-    def get_prefork_target(self, index):
-        first = self.read_header(index * NetworkConstants.CHUNK_SIZE)
-        last = self.read_header(index * NetworkConstants.CHUNK_SIZE + (NetworkConstants.CHUNK_SIZE - 1))
+    def get_prefork_target(self, height):
+        first = self.read_header(height - difficulty_adjustment_interval())
+        last = self.read_header(height - 1)
         bits = last.get('bits')
         target = self.bits_to_target(int(bits, 16))
 
@@ -559,7 +554,7 @@ class Blockchain(util.PrintError):
             return False
         if prev_hash != header.get('prev_block_hash'):
             return False
-        target = self.get_target(height // NetworkConstants.CHUNK_SIZE - 1, height)
+        target = self.get_target(height)
         try:
             self.verify_header(header, prev_hash, target)
         except BaseException as e:
@@ -569,10 +564,10 @@ class Blockchain(util.PrintError):
     def connect_chunk(self, idx, hexdata):
         try:
             data = bfh(hexdata)
-            data = self.verify_chunk(idx, data)
+            data = self.verify_chunk(idx * NetworkConstants.CHUNK_SIZE, data)
             data = bfh(data)
             self.print_error("validated chunk %d" % idx)
-            self.save_chunk(idx, data)
+            self.save_chunk(idx * NetworkConstants.CHUNK_SIZE, data)
             return True
         except BaseException as e:
             self.print_error('verify_chunk failed', str(e))
@@ -594,9 +589,9 @@ class Blockchain(util.PrintError):
     def get_checkpoints(self):
         # for each chunk, store the hash of the last block and the target after the chunk
         cp = []
-        n = self.height() // NetworkConstants.CHUNK_SIZE
+        n = self.height() // difficulty_adjustment_interval()
         for index in range(n):
-            h = self.get_hash((index + 1) * NetworkConstants.CHUNK_SIZE - 1)
-            target = self.get_target(index, self.height())
+            h = self.get_hash((index + 1) * difficulty_adjustment_interval() - 1)
+            target = self.get_target(self.height())
             cp.append((h, target))
         return cp
