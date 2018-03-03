@@ -32,11 +32,11 @@ import json
 import ecdsa
 import pyaes
 
-from .util import bfh, bh2u, to_string
+from .util import bfh, bh2u, to_string, print_error, InvalidPassword, assert_bytes, to_bytes, inv_dict
 from . import version
-from .util import print_error, InvalidPassword, assert_bytes, to_bytes, inv_dict
 from . import segwit_addr
-from struct import unpack_from
+from struct import unpack_from, unpack
+
 
 def read_json(filename, default):
     path = os.path.join(os.path.dirname(__file__), filename)
@@ -90,6 +90,8 @@ class NetworkConstants:
         cls.PREMINE_SIZE = 8000
         cls.HEADER_SIZE = 1487
         cls.HEADER_SIZE_LEGACY = 141
+        cls.EQUIHASH_N = 200
+        cls.EQUIHASH_K = 9
         cls.POW_LIMIT = 0x0007ffffffff0000000000000000000000000000000000000000000000000000
         cls.POW_LIMIT_START = 0x0000000fffff0000000000000000000000000000000000000000000000000000
         cls.POW_LIMIT_LEGACY = 0x00000000ffff0000000000000000000000000000000000000000000000000000
@@ -116,6 +118,8 @@ class NetworkConstants:
         cls.PREMINE_SIZE = 3000
         cls.HEADER_SIZE = 1487
         cls.HEADER_SIZE_LEGACY = 141
+        cls.EQUIHASH_N = 200
+        cls.EQUIHASH_K = 9
         cls.POW_LIMIT = 0x0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         cls.POW_LIMIT_START = 0x0000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         cls.POW_LIMIT_LEGACY = 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
@@ -142,6 +146,8 @@ class NetworkConstants:
         cls.PREMINE_SIZE = 10
         cls.HEADER_SIZE = 177
         cls.HEADER_SIZE_LEGACY = 141
+        cls.EQUIHASH_N = 48
+        cls.EQUIHASH_K = 5
         cls.POW_LIMIT = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         cls.POW_LIMIT_START = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         cls.POW_LIMIT_LEGACY = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
@@ -176,7 +182,7 @@ def needs_retarget(height):
 
 
 def difficulty_adjustment_interval():
-    return NetworkConstants.POW_TARGET_TIMESPAN_LEGACY / NetworkConstants.POW_TARGET_SPACING
+    return NetworkConstants.POW_TARGET_TIMESPAN_LEGACY // NetworkConstants.POW_TARGET_SPACING
 
 
 def get_header_size(height):
@@ -336,11 +342,23 @@ def var_int_read(value, start):
 
     if size == 253:
         (size,) = unpack_from('<H', value, start)
+        start += 2
     elif size == 254:
         (size,) = unpack_from('<I', value, start)
+        start += 4
     elif size == 255:
         (size,) = unpack_from('<Q', value, start)
-    return size
+        start += 8
+
+    return start, size
+
+
+def uint256_from_bytes(s):
+    r = 0
+    t = unpack("<IIIIIIII", s[:32])
+    for i in range(8):
+        r += t[i] << (i * 32)
+    return r
 
 
 def op_push(i):

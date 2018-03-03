@@ -48,6 +48,7 @@ setup(
         'dnspython',
         'jsonrpclib-pelix',
         'PySocks>=1.6.6',
+        'pyblake2',
     ],
     extras_require={
         'hardware': requirements_hw,
