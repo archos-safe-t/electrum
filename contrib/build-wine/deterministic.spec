@@ -22,7 +22,9 @@ hiddenimports += collect_submodules('keepkeylib')
 datas = [
     (home+'lib/currencies.json', 'electrum'),
     (home+'lib/servers.json', 'electrum'),
+    (home+'lib/checkpoints.json', 'electrum'),
     (home+'lib/servers_testnet.json', 'electrum'),
+    (home+'lib/checkpoints_testnet.json', 'electrum'),
     (home+'lib/wordlist/english.txt', 'electrum/wordlist'),
     (home+'lib/locale', 'electrum/locale'),
     (home+'plugins', 'electrum_plugins'),

@@ -87,11 +87,12 @@ class CScreen(Factory.Screen):
         self.add_widget(self.context_menu)
 
 
+# note: this list needs to be kept in sync with another in qt
 TX_ICONS = [
     "close",
     "close",
-    "close",
     "unconfirmed",
+    "close",
     "close",
     "clock1",
     "clock2",
@@ -301,7 +302,7 @@ class SendScreen(CScreen):
         def on_success(tx):
             if tx.is_complete():
                 self.app.broadcast(tx, self.payment_request)
-                self.app.wallet.set_label(tx.hash(), message)
+                self.app.wallet.set_label(tx.txid(), message)
             else:
                 self.app.tx_dialog(tx)
         def on_failure(error):
@@ -521,7 +522,7 @@ class AddressScreen(CScreen):
     def update(self):
         self.menu_actions = [('Receive', self.do_show), ('Details', self.do_view)]
         wallet = self.app.wallet
-        _list = wallet.change_addresses if self.screen.show_change else wallet.receiving_addresses
+        _list = wallet.get_change_addresses() if self.screen.show_change else wallet.get_receiving_addresses()
         search = self.screen.message
         container = self.screen.ids.search_container
         container.clear_widgets()

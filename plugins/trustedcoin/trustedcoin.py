@@ -40,6 +40,7 @@ from electrum.wallet import Multisig_Wallet, Deterministic_Wallet
 from electrum.i18n import _
 from electrum.plugins import BasePlugin, hook
 from electrum.util import NotEnoughFunds
+from electrum.storage import STO_EV_USER_PW
 
 # signing_xpub is hardcoded so that the wallet can be restored from seed, without TrustedCoin's server
 signing_xpub = "xpub661MyMwAqRbcGnMkaTx2594P9EDuiEqMq25PM2aeG6UmwzaohgA6uDmNsvSUV8ubqwA3Wpste1hg69XHgjUuCD5HLcEp2QPzyV1HMrPppsL"
@@ -248,11 +249,11 @@ class Wallet_2fa(Multisig_Wallet):
         assert price <= 100000 * n
         return price
 
-    def make_unsigned_transaction(self, coins, outputs, config,
-                                  fixed_fee=None, change_addr=None):
+    def make_unsigned_transaction(self, coins, outputs, config, fixed_fee=None,
+                                  change_addr=None, is_sweep=False):
         mk_tx = lambda o: Multisig_Wallet.make_unsigned_transaction(
             self, coins, o, config, fixed_fee, change_addr)
-        fee = self.extra_fee(config)
+        fee = self.extra_fee(config) if not is_sweep else 0
         if fee:
             address = self.billing_info['billing_address']
             fee_output = (TYPE_ADDRESS, address, fee)
@@ -388,6 +389,7 @@ class TrustedCoinPlugin(BasePlugin):
         f = lambda x: wizard.request_passphrase(seed, x)
         wizard.show_seed_dialog(run_next=f, seed_text=seed)
 
+    @classmethod
     def get_xkeys(self, seed, passphrase, derivation):
         from electrum.mnemonic import Mnemonic
         from electrum.keystore import bip32_root, bip32_private_derivation
@@ -396,6 +398,7 @@ class TrustedCoinPlugin(BasePlugin):
         xprv, xpub = bip32_private_derivation(xprv, "m/", derivation)
         return xprv, xpub
 
+    @classmethod
     def xkeys_from_seed(self, seed, passphrase):
         words = seed.split()
         n = len(words)
@@ -418,20 +421,22 @@ class TrustedCoinPlugin(BasePlugin):
         k2 = keystore.from_xpub(xpub2)
         wizard.request_password(run_next=lambda pw, encrypt: self.on_password(wizard, pw, encrypt, k1, k2))
 
-    def on_password(self, wizard, password, encrypt, k1, k2):
+    def on_password(self, wizard, password, encrypt_storage, k1, k2):
         k1.update_password(None, password)
-        wizard.storage.set_password(password, encrypt)
+        wizard.storage.set_keystore_encryption(bool(password))
+        if encrypt_storage:
+            wizard.storage.set_password(password, enc_version=STO_EV_USER_PW)
         wizard.storage.put('x1/', k1.dump())
         wizard.storage.put('x2/', k2.dump())
         wizard.storage.write()
         msg = [
-            _("Your wallet file is: %s.")%os.path.abspath(wizard.storage.path),
+            _("Your wallet file is: {}.").format(os.path.abspath(wizard.storage.path)),
             _("You need to be online in order to complete the creation of "
               "your wallet.  If you generated your seed on an offline "
-              'computer, click on "%s" to close this window, move your '
+              'computer, click on "{}" to close this window, move your '
               "wallet file to an online computer, and reopen it with "
-              "Electrum.") % _('Cancel'),
-            _('If you are online, click on "%s" to continue.') % _('Next')
+              "Electrum.").format(_('Cancel')),
+            _('If you are online, click on "{}" to continue.').format(_('Next'))
         ]
         msg = '\n\n'.join(msg)
         wizard.stack = []
@@ -468,7 +473,7 @@ class TrustedCoinPlugin(BasePlugin):
         else:
             self.create_keystore(wizard, seed, passphrase)
 
-    def on_restore_pw(self, wizard, seed, passphrase, password, encrypt):
+    def on_restore_pw(self, wizard, seed, passphrase, password, encrypt_storage):
         storage = wizard.storage
         xprv1, xpub1, xprv2, xpub2 = self.xkeys_from_seed(seed, passphrase)
         k1 = keystore.from_xprv(xprv1)
@@ -482,7 +487,11 @@ class TrustedCoinPlugin(BasePlugin):
         xpub3 = make_xpub(signing_xpub, long_user_id)
         k3 = keystore.from_xpub(xpub3)
         storage.put('x3/', k3.dump())
-        storage.set_password(password, encrypt)
+
+        storage.set_keystore_encryption(bool(password))
+        if encrypt_storage:
+            storage.set_password(password, enc_version=STO_EV_USER_PW)
+
         wizard.wallet = Wallet_2fa(storage)
         wizard.create_addresses()
 

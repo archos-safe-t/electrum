@@ -12,6 +12,7 @@ try:
     from electrum.keystore import Hardware_KeyStore
     from ..hw_wallet import HW_PluginBase
     from electrum.util import print_error, to_string, UserCancelled
+    from electrum.base_wizard import ScriptTypeNotSupported, HWD_SETUP_NEW_WALLET
 
     import time
     import hid
@@ -420,7 +421,7 @@ class DigitalBitbox_KeyStore(Hardware_KeyStore):
 
 
     def decrypt_message(self, pubkey, message, password):
-        raise RuntimeError(_('Encryption and decryption are currently not supported for %s') % self.device)
+        raise RuntimeError(_('Encryption and decryption are currently not supported for {}').format(self.device))
 
 
     def sign_message(self, sequence, message, password):
@@ -669,12 +670,13 @@ class DigitalBitboxPlugin(HW_PluginBase):
             return None
 
 
-    def setup_device(self, device_info, wizard):
+    def setup_device(self, device_info, wizard, purpose):
         devmgr = self.device_manager()
         device_id = device_info.device.id_
         client = devmgr.client_by_id(device_id)
         client.handler = self.create_handler(wizard)
-        client.setupRunning = True
+        if purpose == HWD_SETUP_NEW_WALLET:
+            client.setupRunning = True
         client.get_xpub("m/44'/0'", 'standard')
 
 
@@ -697,6 +699,8 @@ class DigitalBitboxPlugin(HW_PluginBase):
 
 
     def get_xpub(self, device_id, derivation, xtype, wizard):
+        if xtype not in ('standard', 'p2wpkh-p2sh'):
+            raise ScriptTypeNotSupported(_('This type of script is not supported with the Digital Bitbox.'))
         devmgr = self.device_manager()
         client = devmgr.client_by_id(device_id)
         client.handler = self.create_handler(wizard)

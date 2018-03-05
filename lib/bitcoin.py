@@ -37,13 +37,13 @@ from . import version
 from .util import print_error, InvalidPassword, assert_bytes, to_bytes, inv_dict
 from . import segwit_addr
 
-def read_json_dict(filename):
+def read_json(filename, default):
     path = os.path.join(os.path.dirname(__file__), filename)
     try:
         with open(path, 'r') as f:
             r = json.loads(f.read())
     except:
-        r = {}
+        r = default
     return r
 
 
@@ -75,13 +75,15 @@ class NetworkConstants:
     def set_mainnet(cls):
         cls.TESTNET = False
         cls.WIF_PREFIX = 0x80
-        cls.ADDRTYPE_P2PKH = 0
-        cls.ADDRTYPE_P2SH = 5
-        cls.SEGWIT_HRP = "bc"
+        cls.ADDRTYPE_P2PKH = 38
+        cls.ADDRTYPE_P2SH = 23
+        cls.SEGWIT_HRP = "btg"
         cls.HEADERS_URL = "https://headers.electrum.org/blockchain_headers"
         cls.GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
         cls.DEFAULT_PORTS = {'t': '50001', 's': '50002'}
-        cls.DEFAULT_SERVERS = read_json_dict('servers.json')
+        cls.DEFAULT_SERVERS = read_json('servers.json', {})
+        cls.CHECKPOINTS = read_json('checkpoints.json', [])
+        cls.FORK_HEIGHT = 491407
 
     @classmethod
     def set_testnet(cls):
@@ -89,20 +91,24 @@ class NetworkConstants:
         cls.WIF_PREFIX = 0xef
         cls.ADDRTYPE_P2PKH = 111
         cls.ADDRTYPE_P2SH = 196
-        cls.SEGWIT_HRP = "tb"
+        cls.SEGWIT_HRP = "tbtg"
         cls.HEADERS_URL = "https://headers.electrum.org/testnet_headers"
         cls.GENESIS = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
         cls.DEFAULT_PORTS = {'t':'51001', 's':'51002'}
-        cls.DEFAULT_SERVERS = read_json_dict('servers_testnet.json')
+        cls.DEFAULT_SERVERS = read_json('servers_testnet.json', {})
+        cls.CHECKPOINTS = read_json('checkpoints_testnet.json', [])
 
 
 NetworkConstants.set_mainnet()
 
 ################################## transactions
 
+SIGHASH_ALL    = 1
+SIGHASH_FORKID = 0x40
+
 FEE_STEP = 10000
 MAX_FEE_RATE = 300000
-FEE_TARGETS = [25, 10, 5, 2]
+
 
 COINBASE_MATURITY = 100
 COIN = 100000000
@@ -643,8 +649,8 @@ def verify_message(address, sig, message):
         return False
 
 
-def encrypt_message(message, pubkey):
-    return EC_KEY.encrypt_message(message, bfh(pubkey))
+def encrypt_message(message, pubkey, magic=b'BIE1'):
+    return EC_KEY.encrypt_message(message, bfh(pubkey), magic)
 
 
 def chunks(l, n):
@@ -789,7 +795,7 @@ class EC_KEY(object):
     # ECIES encryption/decryption methods; AES-128-CBC with PKCS7 is used as the cipher; hmac-sha256 is used as the mac
 
     @classmethod
-    def encrypt_message(self, message, pubkey):
+    def encrypt_message(self, message, pubkey, magic=b'BIE1'):
         assert_bytes(message)
 
         pk = ser_to_point(pubkey)
@@ -803,20 +809,20 @@ class EC_KEY(object):
         iv, key_e, key_m = key[0:16], key[16:32], key[32:]
         ciphertext = aes_encrypt_with_iv(key_e, iv, message)
         ephemeral_pubkey = bfh(ephemeral.get_public_key(compressed=True))
-        encrypted = b'BIE1' + ephemeral_pubkey + ciphertext
+        encrypted = magic + ephemeral_pubkey + ciphertext
         mac = hmac.new(key_m, encrypted, hashlib.sha256).digest()
 
         return base64.b64encode(encrypted + mac)
 
-    def decrypt_message(self, encrypted):
+    def decrypt_message(self, encrypted, magic=b'BIE1'):
         encrypted = base64.b64decode(encrypted)
         if len(encrypted) < 85:
             raise Exception('invalid ciphertext: length')
-        magic = encrypted[:4]
+        magic_found = encrypted[:4]
         ephemeral_pubkey = encrypted[4:37]
         ciphertext = encrypted[37:-32]
         mac = encrypted[-32:]
-        if magic != b'BIE1':
+        if magic_found != magic:
             raise Exception('invalid ciphertext: invalid magic bytes')
         try:
             ephemeral_pubkey = ser_to_point(ephemeral_pubkey)

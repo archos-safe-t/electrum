@@ -2,9 +2,12 @@ from datetime import datetime
 import inspect
 import requests
 import sys
+import os
+import json
 from threading import Thread
 import time
 import csv
+import decimal
 from decimal import Decimal
 
 from .bitcoin import COIN
@@ -32,7 +35,7 @@ class ExchangeBase(PrintError):
     def get_json(self, site, get_string):
         # APIs must have https
         url = ''.join(['https://', site, get_string])
-        response = requests.request('GET', url, headers={'User-Agent' : 'Electrum'})
+        response = requests.request('GET', url, headers={'User-Agent' : 'Electrum'}, timeout=10)
         return response.json()
 
     def get_csv(self, site, get_string):
@@ -58,19 +61,34 @@ class ExchangeBase(PrintError):
         t.setDaemon(True)
         t.start()
 
-    def get_historical_rates_safe(self, ccy):
-        try:
-            self.print_error("requesting fx history for", ccy)
-            self.history[ccy] = self.historical_rates(ccy)
-            self.print_error("received fx history for", ccy)
-            self.on_history()
-        except BaseException as e:
-            self.print_error("failed fx history:", e)
+    def get_historical_rates_safe(self, ccy, cache_dir):
+        filename = os.path.join(cache_dir, self.name() + '_'+ ccy)
+        if os.path.exists(filename) and (time.time() - os.stat(filename).st_mtime) < 24*3600:
+            try:
+                with open(filename, 'r') as f:
+                    h = json.loads(f.read())
+            except:
+                h = None
+        else:
+            h = None
+        if h is None:
+            try:
+                self.print_error("requesting fx history for", ccy)
+                h = self.request_history(ccy)
+                self.print_error("received fx history for", ccy)
+                self.on_history()
+            except BaseException as e:
+                self.print_error("failed fx history:", e)
+                return
+            with open(filename, 'w') as f:
+                f.write(json.dumps(h))
+        self.history[ccy] = h
+        self.on_history()
 
-    def get_historical_rates(self, ccy):
+    def get_historical_rates(self, ccy, cache_dir):
         result = self.history.get(ccy)
         if not result and ccy in self.history_ccys():
-            t = Thread(target=self.get_historical_rates_safe, args=(ccy,))
+            t = Thread(target=self.get_historical_rates_safe, args=(ccy, cache_dir))
             t.setDaemon(True)
             t.start()
         return result
@@ -98,7 +116,7 @@ class BitcoinAverage(ExchangeBase):
                 'MXN', 'NOK', 'NZD', 'PLN', 'RON', 'RUB', 'SEK', 'SGD', 'USD',
                 'ZAR']
 
-    def historical_rates(self, ccy):
+    def request_history(self, ccy):
         history = self.get_csv('apiv2.bitcoinaverage.com',
                                "/indices/global/history/BTC%s?period=alltime&format=csv" % ccy)
         return dict([(h['DateTime'][:10], h['Average'])
@@ -126,7 +144,7 @@ class BitcoinVenezuela(ExchangeBase):
     def history_ccys(self):
         return ['ARS', 'EUR', 'USD', 'VEF']
 
-    def historical_rates(self, ccy):
+    def request_history(self, ccy):
         return self.get_json('api.bitcoinvenezuela.com',
                              "/historical/index.php?coin=BTC")[ccy +'_BTC']
 
@@ -198,23 +216,24 @@ class Coinbase(ExchangeBase):
 
 class CoinDesk(ExchangeBase):
 
-    def get_rates(self, ccy):
+    def get_currencies(self):
         dicts = self.get_json('api.coindesk.com',
                               '/v1/bpi/supported-currencies.json')
+        return [d['currency'] for d in dicts]
+
+    def get_rates(self, ccy):
         json = self.get_json('api.coindesk.com',
                              '/v1/bpi/currentprice/%s.json' % ccy)
-        ccys = [d['currency'] for d in dicts]
-        result = dict.fromkeys(ccys)
-        result[ccy] = Decimal(json['bpi'][ccy]['rate_float'])
+        result = {ccy: Decimal(json['bpi'][ccy]['rate_float'])}
         return result
 
     def history_starts(self):
-        return { 'USD': '2012-11-30' }
+        return { 'USD': '2012-11-30', 'EUR': '2013-09-01' }
 
     def history_ccys(self):
         return self.history_starts().keys()
 
-    def historical_rates(self, ccy):
+    def request_history(self, ccy):
         start = self.history_starts()[ccy]
         end = datetime.today().strftime('%Y-%m-%d')
         # Note ?currency and ?index don't work as documented.  Sigh.
@@ -312,7 +331,7 @@ class Winkdex(ExchangeBase):
     def history_ccys(self):
         return ['USD']
 
-    def historical_rates(self, ccy):
+    def request_history(self, ccy):
         json = self.get_json('winkdex.com',
                              "/api/v0/series?start_time=1342915200")
         history = json['series'][0]['results']
@@ -345,7 +364,9 @@ def get_exchanges_and_currencies():
         exchange = klass(None, None)
         try:
             d[name] = exchange.get_currencies()
+            print(name, "ok")
         except:
+            print(name, "error")
             continue
     with open(path, 'w') as f:
         f.write(json.dumps(d, indent=4, sort_keys=True))
@@ -377,6 +398,9 @@ class FxThread(ThreadJob):
         self.ccy_combo = None
         self.hist_checkbox = None
         self.set_exchange(self.config_exchange())
+        self.cache_dir = os.path.join(config.path, 'cache')
+        if not os.path.exists(self.cache_dir):
+            os.mkdir(self.cache_dir)
 
     def get_currencies(self, h):
         d = get_exchanges_by_ccy(h)
@@ -389,13 +413,17 @@ class FxThread(ThreadJob):
     def ccy_amount_str(self, amount, commas):
         prec = CCY_PRECISIONS.get(self.ccy, 2)
         fmt_str = "{:%s.%df}" % ("," if commas else "", max(0, prec))
-        return fmt_str.format(round(amount, prec))
+        try:
+            rounded_amount = round(amount, prec)
+        except decimal.InvalidOperation:
+            rounded_amount = amount
+        return fmt_str.format(rounded_amount)
 
     def run(self):
         # This runs from the plugins thread which catches exceptions
         if self.is_enabled():
             if self.timeout ==0 and self.show_history():
-                self.exchange.get_historical_rates(self.ccy)
+                self.exchange.get_historical_rates(self.ccy, self.cache_dir)
             if self.timeout <= time.time():
                 self.timeout = time.time() + 150
                 self.exchange.update(self.ccy)
@@ -480,8 +508,13 @@ class FxThread(ThreadJob):
         if rate is None and (datetime.today().date() - d_t.date()).days <= 2:
             rate = self.exchange.quotes.get(self.ccy)
             self.history_used_spot = True
-        return rate
+        return Decimal(rate) if rate is not None else None
 
     def historical_value_str(self, satoshis, d_t):
         rate = self.history_rate(d_t)
         return self.value_str(satoshis, rate)
+
+    def timestamp_rate(self, timestamp):
+        from electrum.util import timestamp_to_datetime
+        date = timestamp_to_datetime(timestamp)
+        return self.history_rate(date)

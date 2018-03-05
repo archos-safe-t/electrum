@@ -45,6 +45,14 @@ class SerializationError(Exception):
     """ Thrown when there's a problem deserializing or serializing """
 
 
+class UnknownTxinType(Exception):
+    pass
+
+
+class NotRecognizedRedeemScript(Exception):
+    pass
+
+
 class BCDataStream(object):
     def __init__(self):
         self.input = None
@@ -302,10 +310,22 @@ def parse_scriptSig(d, _bytes):
     if match_decoded(decoded, match):
         item = decoded[0][1]
         if item[0] == 0:
+            # segwit embedded into p2sh
+            # witness version 0
             d['address'] = bitcoin.hash160_to_p2sh(bitcoin.hash_160(item))
-            d['type'] = 'p2wpkh-p2sh' if len(item) == 22 else 'p2wsh-p2sh'
+            if len(item) == 22:
+                d['type'] = 'p2wpkh-p2sh'
+            elif len(item) == 34:
+                d['type'] = 'p2wsh-p2sh'
+            else:
+                print_error("unrecognized txin type", bh2u(item))
+        elif opcodes.OP_1 <= item[0] <= opcodes.OP_16:
+            # segwit embedded into p2sh
+            # witness version 1-16
+            pass
         else:
-            # payto_pubkey
+            # assert item[0] == 0x30
+            # pay-to-pubkey
             d['type'] = 'p2pk'
             d['address'] = "(pubkey)"
             d['signatures'] = [bh2u(item)]
@@ -361,7 +381,7 @@ def parse_redeemScript(s):
     match_multisig = [ op_m ] + [opcodes.OP_PUSHDATA4]*n + [ op_n, opcodes.OP_CHECKMULTISIG ]
     if not match_decoded(dec2, match_multisig):
         print_error("cannot find address in input script", bh2u(s))
-        return
+        raise NotRecognizedRedeemScript()
     x_pubkeys = [bh2u(x[1]) for x in dec2[1:-2]]
     pubkeys = [safe_parse_pubkey(x) for x in x_pubkeys]
     redeemScript = multisig_script(pubkeys, m)
@@ -430,21 +450,40 @@ def parse_witness(vds, txin):
     if n == 0xffffffff:
         txin['value'] = vds.read_uint64()
         n = vds.read_compact_size()
+    # now 'n' is the number of items in the witness
     w = list(bh2u(vds.read_bytes(vds.read_compact_size())) for i in range(n))
+
+    add_w = lambda x: var_int(len(x) // 2) + x
+    txin['witness'] = var_int(n) + ''.join(add_w(i) for i in w)
+
+    # FIXME: witness version > 0 will probably fail here.
+    # For native segwit, we would need the scriptPubKey of the parent txn
+    # to determine witness program version, and properly parse the witness.
+    # In case of p2sh-segwit, we can tell based on the scriptSig in this txn.
+    # The code below assumes witness version 0.
+    # p2sh-segwit should work in that case; for native segwit we need to tell
+    # between p2wpkh and p2wsh; we do this based on number of witness items,
+    # hence (FIXME) p2wsh with n==2 (maybe n==1 ?) will probably fail.
+    # If v==0 and n==2, we need parent scriptPubKey to distinguish between p2wpkh and p2wsh.
     if txin['type'] == 'coinbase':
         pass
-    elif n > 2:
+    elif txin['type'] == 'p2wsh-p2sh' or n > 2:
+        try:
+            m, n, x_pubkeys, pubkeys, witnessScript = parse_redeemScript(bfh(w[-1]))
+        except NotRecognizedRedeemScript:
+            raise UnknownTxinType()
         txin['signatures'] = parse_sig(w[1:-1])
-        m, n, x_pubkeys, pubkeys, witnessScript = parse_redeemScript(bfh(w[-1]))
         txin['num_sig'] = m
         txin['x_pubkeys'] = x_pubkeys
         txin['pubkeys'] = pubkeys
         txin['witnessScript'] = witnessScript
-    else:
+    elif txin['type'] == 'p2wpkh-p2sh' or n == 2:
         txin['num_sig'] = 1
         txin['x_pubkeys'] = [w[1]]
         txin['pubkeys'] = [safe_parse_pubkey(w[1])]
         txin['signatures'] = parse_sig([w[0]])
+    else:
+        raise UnknownTxinType()
 
 def parse_output(vds, i):
     d = {}
@@ -474,7 +513,12 @@ def deserialize(raw):
     if is_segwit:
         for i in range(n_vin):
             txin = d['inputs'][i]
-            parse_witness(vds, txin)
+            try:
+                parse_witness(vds, txin)
+            except UnknownTxinType:
+                txin['type'] = 'unknown'
+                # FIXME: GUI might show 'unknown' address (e.g. for a non-multisig p2wsh)
+                continue
             # segwit-native script
             if not txin.get('scriptSig'):
                 if txin['num_sig'] == 1:
@@ -645,7 +689,7 @@ class Transaction:
         num_sig = txin.get('num_sig', 1)
         if estimate_size:
             pubkey_size = self.estimate_pubkey_size_for_txin(txin)
-            pk_list = ["00" * pubkey_size] * num_sig
+            pk_list = ["00" * pubkey_size] * len(txin.get('x_pubkeys', [None]))
             # we assume that signature will be 0x48 bytes long
             sig_list = [ "00" * 0x48 ] * num_sig
         else:
@@ -674,7 +718,9 @@ class Transaction:
             witness_script = multisig_script(pubkeys, txin['num_sig'])
             witness = var_int(n) + '00' + ''.join(add_w(x) for x in sig_list) + add_w(witness_script)
         else:
-            raise BaseException('wrong txin type')
+            witness = txin.get('witness', None)
+            if not witness:
+                raise BaseException('wrong txin type:', txin['type'])
         if self.is_txin_complete(txin) or estimate_size:
             value_field = ''
         else:
@@ -682,8 +728,26 @@ class Transaction:
         return value_field + witness
 
     @classmethod
-    def is_segwit_input(self, txin):
-        return txin['type'] in ['p2wpkh', 'p2wpkh-p2sh', 'p2wsh', 'p2wsh-p2sh']
+    def is_segwit_input(cls, txin):
+        has_nonzero_witness = txin.get('witness', '00') != '00'
+        return cls.is_segwit_inputtype(txin['type']) or has_nonzero_witness
+
+    @classmethod
+    def is_segwit_inputtype(cls, txin_type):
+        return txin_type in ('p2wpkh', 'p2wpkh-p2sh', 'p2wsh', 'p2wsh-p2sh')
+
+    @classmethod
+    def is_bip143_input(self, txin):
+        # return self.is_segwit_input(txin)
+        return True
+
+    @classmethod
+    def get_sighash(self):
+        return bitcoin.SIGHASH_ALL | bitcoin.SIGHASH_FORKID
+
+    @classmethod
+    def get_forkid(self):
+        return 79
 
     @classmethod
     def input_script(self, txin, estimate_size=False):
@@ -747,6 +811,14 @@ class Transaction:
         return bh2u(bfh(txin['prevout_hash'])[::-1]) + int_to_hex(txin['prevout_n'], 4)
 
     @classmethod
+    def get_outpoint_from_txin(cls, txin):
+        if txin['type'] == 'coinbase':
+            return None
+        prevout_hash = txin['prevout_hash']
+        prevout_n = txin['prevout_n']
+        return prevout_hash + ':%d' % prevout_n
+
+    @classmethod
     def serialize_input(self, txin, script):
         # Prev hash and index
         s = self.serialize_outpoint(txin)
@@ -776,13 +848,13 @@ class Transaction:
 
     def serialize_preimage(self, i):
         nVersion = int_to_hex(self.version, 4)
-        nHashType = int_to_hex(1, 4)
+        nHashType = int_to_hex(self.get_sighash() | (self.get_forkid() << 8), 4)
         nLocktime = int_to_hex(self.locktime, 4)
         inputs = self.inputs()
         outputs = self.outputs()
         txin = inputs[i]
         # TODO: py3 hex
-        if self.is_segwit_input(txin):
+        if self.is_bip143_input(txin):
             hashPrevouts = bh2u(Hash(bfh(''.join(self.serialize_outpoint(txin) for txin in inputs))))
             hashSequence = bh2u(Hash(bfh(''.join(int_to_hex(txin.get('sequence', 0xffffffff - 1), 4) for txin in inputs))))
             hashOutputs = bh2u(Hash(bfh(''.join(self.serialize_output(o) for o in outputs))))
@@ -863,19 +935,25 @@ class Transaction:
         return self.virtual_size_from_weight(weight)
 
     @classmethod
-    def estimated_input_weight(cls, txin):
+    def estimated_input_weight(cls, txin, is_segwit_tx):
         '''Return an estimate of serialized input weight in weight units.'''
         script = cls.input_script(txin, True)
         input_size = len(cls.serialize_input(txin, script)) // 2
 
-        # note: we should actually branch based on tx.is_segwit()
-        # only if none of the inputs have a witness, is the size actually 0
         if cls.is_segwit_input(txin):
+            assert is_segwit_tx
             witness_size = len(cls.serialize_witness(txin, True)) // 2
         else:
-            witness_size = 0
+            witness_size = 1 if is_segwit_tx else 0
 
         return 4 * input_size + witness_size
+
+    @classmethod
+    def estimated_output_size(cls, address):
+        """Return an estimate of serialized output size in bytes."""
+        script = bitcoin.address_to_script(address)
+        # 8 byte value + 1 byte script len + script
+        return 9 + len(script) // 2
 
     @classmethod
     def virtual_size_from_weight(cls, weight):
@@ -941,7 +1019,7 @@ class Transaction:
                     public_key = private_key.get_verifying_key()
                     sig = private_key.sign_digest_deterministic(pre_hash, hashfunc=hashlib.sha256, sigencode = ecdsa.util.sigencode_der)
                     assert public_key.verify_digest(sig, pre_hash, sigdecode = ecdsa.util.sigdecode_der)
-                    txin['signatures'][j] = bh2u(sig) + '01'
+                    txin['signatures'][j] = bh2u(sig) + int_to_hex(self.get_sighash(), 1)
                     #txin['x_pubkeys'][j] = pubkey
                     txin['pubkeys'][j] = pubkey # needed for fd keys
                     self._inputs[i] = txin
