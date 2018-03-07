@@ -595,9 +595,15 @@ class Blockchain(util.PrintError):
     def get_checkpoints(self):
         # for each chunk, store the hash of the last block and the target after the chunk
         cp = []
-        n = self.height() // difficulty_adjustment_interval()
+        diff_adj = difficulty_adjustment_interval()
+        n = self.height() // diff_adj
         for index in range(n):
-            h = self.get_hash((index + 1) * difficulty_adjustment_interval() - 1)
-            target = self.get_target(self.height())
+            height = (index + 1) * diff_adj
+
+            if is_postfork(height):
+                break
+
+            h = self.get_hash(height - 1)
+            target = self.get_target(height)
             cp.append((h, target))
         return cp
