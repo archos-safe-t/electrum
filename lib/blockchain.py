@@ -480,27 +480,26 @@ class Blockchain(util.PrintError):
                     first = headers[prev_height] if prev_height in headers else self.read_header(prev_height)
                     i += 1
 
-                if first is None:
-                    new_target = pow_limit
-                else:
-                    avg = total // NetworkConstants.POW_AVERAGING_WINDOW
-                    actual_timespan = self.get_mediantime_past(headers,
-                                                               last.get('block_height')) - self.get_mediantime_past(
-                        headers, first.get('block_height'))
+                # This should never happen else we have a serious problem
+                assert first is not None
 
-                    if actual_timespan < min_actual_timespan():
-                        actual_timespan = min_actual_timespan()
+                avg = total // NetworkConstants.POW_AVERAGING_WINDOW
+                actual_timespan = self.get_mediantime_past(headers, last.get('block_height')) \
+                    - self.get_mediantime_past(headers, first.get('block_height'))
 
-                    if actual_timespan > max_actual_timespan():
-                        actual_timespan = max_actual_timespan()
+                if actual_timespan < min_actual_timespan():
+                    actual_timespan = min_actual_timespan()
 
-                    avg = avg // averaging_window_timespan()
-                    avg *= actual_timespan
+                if actual_timespan > max_actual_timespan():
+                    actual_timespan = max_actual_timespan()
 
-                    if avg > pow_limit:
-                        avg = pow_limit
+                avg = avg // averaging_window_timespan()
+                avg *= actual_timespan
 
-                    new_target = int(avg)
+                if avg > pow_limit:
+                    avg = pow_limit
+
+                new_target = int(avg)
             else:
                 new_target = pow_limit
 
