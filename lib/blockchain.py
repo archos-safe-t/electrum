@@ -249,7 +249,6 @@ class Blockchain(util.PrintError):
         offset = 0
         prev_hash = self.get_hash(height-1)
 
-        ser_chunks = ''
         headers = {}
         target = 0
 
@@ -268,9 +267,6 @@ class Blockchain(util.PrintError):
             prev_hash = hash_header(header, height)
             offset += header_size
             height += 1
-            ser_chunks += serialize_header(header)
-
-        return ser_chunks
 
     def path(self):
         d = util.get_headers_dir(self.config)
@@ -572,8 +568,7 @@ class Blockchain(util.PrintError):
     def connect_chunk(self, idx, hexdata):
         try:
             data = bfh(hexdata)
-            data = self.verify_chunk(idx * NetworkConstants.CHUNK_SIZE, data)
-            data = bfh(data)
+            self.verify_chunk(idx * NetworkConstants.CHUNK_SIZE, data)
             self.print_error("validated chunk %d" % idx)
             self.save_chunk(idx * NetworkConstants.CHUNK_SIZE, data)
             return True
