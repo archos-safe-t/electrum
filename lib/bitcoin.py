@@ -190,19 +190,6 @@ def get_header_size(height):
         else NetworkConstants.HEADER_SIZE_LEGACY
 
 
-def get_powlimit(height):
-    if height < NetworkConstants.FORK_HEIGHT:
-        pow_limit = NetworkConstants.POW_LIMIT_LEGACY
-    elif height < (NetworkConstants.FORK_HEIGHT + NetworkConstants.PREMINE_SIZE):
-        pow_limit = NetworkConstants.POW_LIMIT
-    elif height < (NetworkConstants.FORK_HEIGHT + NetworkConstants.PREMINE_SIZE + NetworkConstants.POW_AVERAGING_WINDOW):
-        pow_limit = NetworkConstants.POW_LIMIT_START
-    else:
-        pow_limit = NetworkConstants.POW_LIMIT
-
-    return pow_limit
-
-
 def hex_to_int(s):
     return int('0x' + bh2u(s[::-1]), 16)
 
