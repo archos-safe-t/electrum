@@ -114,8 +114,8 @@ class NetworkConstants:
         cls.DEFAULT_PORTS = {'t': '51001', 's': '51002'}
         cls.DEFAULT_SERVERS = read_json('servers_testnet.json', {})
         cls.CHECKPOINTS = read_json('checkpoints_testnet.json', [])
-        cls.FORK_HEIGHT = 3000
-        cls.PREMINE_SIZE = 3000
+        cls.FORK_HEIGHT = 1
+        cls.PREMINE_SIZE = 50
         cls.HEADER_SIZE = 1487
         cls.HEADER_SIZE_LEGACY = 141
         cls.EQUIHASH_N = 200
@@ -136,7 +136,7 @@ class NetworkConstants:
         cls.WIF_PREFIX = 0xef
         cls.ADDRTYPE_P2PKH = 111
         cls.ADDRTYPE_P2SH = 196
-        cls.SEGWIT_HRP = "btg"
+        cls.SEGWIT_HRP = "tbtg"
         cls.HEADERS_URL = "https://headers.bitcoingold.org/blockchain_headers"
         cls.GENESIS = "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
         cls.DEFAULT_PORTS = {'t': '50001', 's': '50002'}
