@@ -69,7 +69,7 @@ def serialize_header(header, legacy=False):
             + rev_hex(header.get('reserved'))
 
     s += int_to_hex(header.get('timestamp'), 4) \
-        + rev_hex(header.get('bits'))
+        + int_to_hex(header.get('bits'), 4)
 
     if legacy:
         s += rev_hex(header.get('nonce'))[:8]
@@ -88,7 +88,7 @@ def deserialize_header(header, height):
         merkle_root=hash_encode(header[36:68]),
         reserved=hash_encode(header[72:100]),
         timestamp=hex_to_int(header[100:104]),
-        bits=hash_encode(header[104:108]),
+        bits=hex_to_int(header[104:108]),
         nonce=hash_encode(header[108:140]),
         solution=hash_encode(header[140:])
     )
@@ -230,8 +230,8 @@ class Blockchain(util.PrintError):
         if prev_hash != header.get('prev_block_hash'):
             raise BaseException("prev hash mismatch: %s vs %s" % (prev_hash, header.get('prev_block_hash')))
         bits = self.target_to_bits(target)
-        if bits != int(header.get('bits'), 16):
-            raise BaseException("bits mismatch: %s vs %s" % (bits, int(header.get('bits'), 16)))
+        if bits != header.get('bits'):
+            raise BaseException("bits mismatch: %s vs %s" % (bits, header.get('bits'),))
         if int('0x' + _hash, 16) > target:
             raise BaseException("insufficient proof of work: %s vs target %s" % (int('0x' + _hash, 16), target))
         if is_postfork(block_height):
@@ -432,7 +432,7 @@ class Blockchain(util.PrintError):
             if NetworkConstants.REGTEST or height % difficulty_adjustment_interval() != 0:
                 last = self.read_header(height - 1)
                 bits = last.get('bits')
-                new_target = self.bits_to_target(int(bits, 16))
+                new_target = self.bits_to_target(bits)
             else:
                 new_target = self.get_prefork_target(height)
 
@@ -442,7 +442,7 @@ class Blockchain(util.PrintError):
         first = self.read_header(height - difficulty_adjustment_interval())
         last = self.read_header(height - 1)
         bits = last.get('bits')
-        target = self.bits_to_target(int(bits, 16))
+        target = self.bits_to_target(bits)
 
         actual_timespan = last.get('timestamp') - first.get('timestamp')
         target_timespan = 14 * 24 * 60 * 60
@@ -475,7 +475,7 @@ class Blockchain(util.PrintError):
                 i = 0
 
                 while i < NetworkConstants.POW_AVERAGING_WINDOW and first is not None:
-                    total += self.bits_to_target(int(first.get('bits'), 16))
+                    total += self.bits_to_target(first.get('bits'))
                     prev_height = height - i - 1
                     first = headers[prev_height] if prev_height in headers else self.read_header(prev_height)
                     i += 1
