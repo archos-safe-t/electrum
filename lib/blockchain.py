@@ -534,15 +534,19 @@ class Blockchain(util.PrintError):
         return ret
 
     def target_to_bits(self, target):
-        nbits = target.bit_length()
-        # Round up to next 8-bits
-        nbits = ((nbits + 7) & ~0x7)
-        exponent = (int(nbits / 8) & 0xff)
-        coefficient = (target >> (nbits - 24)) & 0xffffff
-        if coefficient & 0x800000:
-            coefficient >>= 8
-            exponent += 1
-        return (exponent << 24) | coefficient
+        assert target >= 0
+        nsize = (target.bit_length() + 7) // 8
+        if nsize <= 3:
+            c = target << (8 * (3 - nsize))
+        else:
+            c = target >> (8 * (nsize - 3))
+        if c & 0x00800000:
+            c >>= 8
+            nsize += 1
+        assert (c & ~0x007fffff) == 0
+        assert nsize < 256
+        c |= nsize << 24
+        return c
 
     def can_connect(self, header, check_height=True):
         height = header['block_height']
