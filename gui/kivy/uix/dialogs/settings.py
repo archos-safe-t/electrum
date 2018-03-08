@@ -31,7 +31,7 @@ Builder.load_string('''
                 padding: '10dp'
                 SettingsItem:
                     lang: settings.get_language_name()
-                    title: 'Language' + ': ' + str(self.lang)
+                    title: 'Language' + ': ' + 'English'
                     description: _('Language')
                     action: partial(root.language_dialog, self)
                 CardSeparator
@@ -130,12 +130,12 @@ class SettingsDialog(Factory.Popup):
     def language_dialog(self, item, dt):
         if self._language_dialog is None:
             l = self.config.get('language', 'en_UK')
-            def cb(key):
-                self.config.set_key("language", key, True)
-                item.lang = self.get_language_name()
-                self.app.language = key
-            self._language_dialog = ChoiceDialog(_('Language'), languages, l, cb)
-        self._language_dialog.open()
+        #     def cb(key):
+        #         self.config.set_key("language", key, True)
+        #         item.lang = self.get_language_name()
+        #         self.app.language = key
+        #     self._language_dialog = ChoiceDialog(_('Language'), languages, l, cb)
+        # self._language_dialog.open()
 
     def unit_dialog(self, item, dt):
         if self._unit_dialog is None:

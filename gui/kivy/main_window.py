@@ -543,6 +543,8 @@ class ElectrumWindow(App):
             self.wallet = None
 
     def on_key_down(self, instance, key, keycode, codepoint, modifiers):
+        if not self.wallet and keycode == 270:
+            return True
         if 'ctrl' in modifiers:
             # q=24 w=25
             if keycode in (24, 25):
