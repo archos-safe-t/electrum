@@ -21,7 +21,7 @@ class AmountEdit(MyLineEdit):
 
     def __init__(self, base_unit, is_int = False, parent=None):
         QLineEdit.__init__(self, parent)
-        # This seems sufficient for hundred-BTC amounts with 8 decimals
+        # This seems sufficient for hundred-BTG amounts with 8 decimals
         self.setFixedWidth(140)
         self.base_unit = base_unit
         self.textChanged.connect(self.numbify)
@@ -73,7 +73,7 @@ class AmountEdit(MyLineEdit):
         self.setText("%d"%x)
 
 
-class BTCAmountEdit(AmountEdit):
+class BTGAmountEdit(AmountEdit):
 
     def __init__(self, decimal_point, is_int = False, parent=None):
         AmountEdit.__init__(self, self._base_unit, is_int, parent)
@@ -82,9 +82,9 @@ class BTCAmountEdit(AmountEdit):
     def _base_unit(self):
         p = self.decimal_point()
         if p == 8:
-            return 'BTC'
+            return 'BTG'
         if p == 5:
-            return 'mBTC'
+            return 'mBTG'
         if p == 2:
             return 'bits'
         raise Exception('Unknown base unit')
@@ -104,12 +104,12 @@ class BTCAmountEdit(AmountEdit):
             self.setText(format_satoshis_plain(amount, self.decimal_point()))
 
 
-class FeerateEdit(BTCAmountEdit):
+class FeerateEdit(BTGAmountEdit):
     def _base_unit(self):
         return 'sat/byte'
 
     def get_amount(self):
-        sat_per_byte_amount = BTCAmountEdit.get_amount(self)
+        sat_per_byte_amount = BTGAmountEdit.get_amount(self)
         if sat_per_byte_amount is None:
             return None
         return 1000 * sat_per_byte_amount
