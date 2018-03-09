@@ -242,7 +242,7 @@ class FxThread(ThreadJob):
         self.on_quotes()
 
     def set_exchange(self, name):
-        class_ = globals().get(name, BitcoinAverage)
+        class_ = globals().get(name, Bitfinex)
         self.print_error("using exchange", name)
         if self.config_exchange() != name:
             self.config.set_key('use_exchange', name, True)
