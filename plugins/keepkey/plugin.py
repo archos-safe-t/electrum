@@ -12,6 +12,7 @@ from electrum.transaction import deserialize
 from electrum.keystore import Hardware_KeyStore, is_xpubkey, parse_xpubkey
 from electrum.base_wizard import ScriptTypeNotSupported
 
+import bitcoin
 from ..hw_wallet import HW_PluginBase
 
 
@@ -139,7 +140,7 @@ class KeepKeyCompatiblePlugin(HW_PluginBase):
         return client
 
     def get_coin_name(self):
-        return None if NetworkConstants.TESTNET else "Bitcoin Gold"
+        return "Bitcoin Gold Testnet" if bitcoin.NetworkConstants.TESTNET else "Bitcoin Gold"
 
     def initialize_device(self, device_id, wizard, handler):
         # Initialization method
@@ -347,9 +348,9 @@ class KeepKeyCompatiblePlugin(HW_PluginBase):
                         txoutputtype.script_type = self.types.PAYTOWITNESS
                     else:
                         addrtype, hash_160 = b58_address_to_hash160(address)
-                        if addrtype == NetworkConstants.ADDRTYPE_P2PKH:
+                        if addrtype == bitcoin.NetworkConstants.ADDRTYPE_P2PKH:
                             txoutputtype.script_type = self.types.PAYTOADDRESS
-                        elif addrtype == NetworkConstants.ADDRTYPE_P2SH:
+                        elif addrtype == bitcoin.NetworkConstants.ADDRTYPE_P2SH:
                             txoutputtype.script_type = self.types.PAYTOSCRIPTHASH
                         else:
                             raise BaseException('addrtype: ' + str(addrtype))

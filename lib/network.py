@@ -22,7 +22,6 @@
 # SOFTWARE.
 import time
 import queue
-import os
 import stat
 import errno
 import random
@@ -31,7 +30,6 @@ import select
 from collections import defaultdict
 import threading
 import socket
-import json
 
 import socks
 from . import util
@@ -218,6 +216,7 @@ class Network(util.DaemonThread):
         self.interfaces = {}
         self.auto_connect = self.config.get('auto_connect', True)
         self.connecting = set()
+        self.connection_status = ''
         self.requested_chunks = set()
         self.socket_queue = queue.Queue()
         self.start_network(deserialize_server(self.default_server)[2],
@@ -799,7 +798,8 @@ class Network(util.DaemonThread):
         self.notify('updated')
 
     def request_header(self, interface, height):
-        #interface.print_error("requesting header %d" % height)
+        if self.debug:
+            interface.print_error("requesting header %d" % height)
         self.queue_request('blockchain.block.get_header', [height], interface)
         interface.request = height
         interface.req_time = time.time()
@@ -813,7 +813,7 @@ class Network(util.DaemonThread):
             return
         height = header.get('block_height')
         if interface.request != height:
-            interface.print_error("unsolicited header",interface.request, height)
+            interface.print_error("unsolicited header", interface.request, height)
             self.connection_down(interface.server)
             return
         chain = blockchain.check_header(header)
@@ -920,7 +920,7 @@ class Network(util.DaemonThread):
         # If not finished, get the next header
         if next_height:
             if interface.mode == 'catch_up' and interface.tip > next_height + 50:
-                self.request_chunk(interface, next_height // 2016)
+                self.request_chunk(interface, next_height // NetworkConstants.CHUNK_SIZE)
             else:
                 self.request_header(interface, next_height)
         else:
@@ -962,13 +962,19 @@ class Network(util.DaemonThread):
     def init_headers_file(self):
         b = self.blockchains[0]
         filename = b.path()
-        length = 80 * len(bitcoin.NetworkConstants.CHECKPOINTS) * 2016
-        if not os.path.exists(filename) or os.path.getsize(filename) < length:
-            with open(filename, 'wb') as f:
-                if length>0:
-                    f.seek(length-1)
+        b.update_size()
+
+        length = len(NetworkConstants.CHECKPOINTS) * difficulty_adjustment_interval()
+        if not os.path.exists(filename) or b.size() < length:
+            offset, header_size = b.get_offset(length)
+
+            def fill_header(f):
+                if length > 0:
+                    f.seek(offset-1)
                     f.write(b'\x00')
-        with b.lock:
+
+            blockchain.write_file(filename, fill_header, b.lock, 'wb+')
+
             b.update_size()
 
     def run(self):
@@ -1087,4 +1093,4 @@ class Network(util.DaemonThread):
             f.write(json.dumps(cp, indent=4))
 
     def max_checkpoint(self):
-        return max(0, len(bitcoin.NetworkConstants.CHECKPOINTS) * 2016 - 1)
+        return max(0, len(NetworkConstants.CHECKPOINTS) * difficulty_adjustment_interval() - 1)

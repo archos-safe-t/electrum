@@ -20,3 +20,6 @@ bin/
 # tox files
 .cache/
 .coverage
+/venv/**
+/.idea/**
+/example.log
