@@ -510,12 +510,6 @@ class Blockchain(util.PrintError):
 
                 solvetime = cur.get('timestamp') - prev.get('timestamp')
 
-                # this is important and good
-                if solvetime > 6 * NetworkConstants.POW_TARGET_SPACING:
-                    solvetime = 6 * NetworkConstants.POW_TARGET_SPACING
-                if solvetime < -5 * NetworkConstants.POW_TARGET_SPACING:
-                    solvetime = -5 * NetworkConstants.POW_TARGET_SPACING
-
                 j += 1
                 t += solvetime * j
                 total += self.bits_to_target(cur.get('bits')) // (NetworkConstants.ZAWY_ADJUST_WEIGHT * NetworkConstants.ZAWY_AVERAGING_WINDOW * NetworkConstants.ZAWY_AVERAGING_WINDOW)
