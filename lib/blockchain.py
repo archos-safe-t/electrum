@@ -444,11 +444,11 @@ class Blockchain(util.PrintError):
         elif height < NetworkConstants.BTG_HEIGHT + NetworkConstants.PREMINE_SIZE + NetworkConstants.DIGI_AVERAGING_WINDOW:
             new_target = NetworkConstants.POW_LIMIT_START
         # Digishield
-        elif height < NetworkConstants.ZAWY_HEIGHT:
+        elif height < NetworkConstants.LWMA_HEIGHT:
             new_target = self.get_digishield_target(height, headers)
         # Zawy LWMA
         else:
-            new_target = self.get_zawy_lwma_target(height, headers)
+            new_target = self.get_lwma_target(height, headers)
 
         return new_target
 
@@ -492,7 +492,7 @@ class Blockchain(util.PrintError):
 
         return new_target
 
-    def get_zawy_lwma_target(self, height, headers):
+    def get_lwma_target(self, height, headers):
         cur = self.get_header(height, headers)
         last_height = (height - 1)
         last = self.get_header(last_height, headers)
@@ -507,11 +507,11 @@ class Blockchain(util.PrintError):
             t = 0
             j = 0
 
-            assert (height - NetworkConstants.ZAWY_AVERAGING_WINDOW) > 0:
+            assert (height - NetworkConstants.LWMA_AVERAGING_WINDOW) > 0
                 
             # Loop through N most recent blocks.  "< height", not "<=".
             # height-1 = most recently solved block
-            for i in range(height - NetworkConstants.ZAWY_AVERAGING_WINDOW, height):
+            for i in range(height - NetworkConstants.LWMA_AVERAGING_WINDOW, height):
                 cur = self.get_header(i, headers)
                 prev_height = (i - 1)
                 prev = self.get_header(prev_height, headers)
@@ -520,11 +520,11 @@ class Blockchain(util.PrintError):
 
                 j += 1
                 t += solvetime * j
-                total += self.bits_to_target(cur.get('bits')) // (NetworkConstants.ZAWY_ADJUST_WEIGHT * NetworkConstants.ZAWY_AVERAGING_WINDOW * NetworkConstants.ZAWY_AVERAGING_WINDOW)
+                total += self.bits_to_target(cur.get('bits')) // (NetworkConstants.LWMA_ADJUST_WEIGHT * NetworkConstants.LWMA_AVERAGING_WINDOW * NetworkConstants.LWMA_AVERAGING_WINDOW)
 
             # Keep t reasonable in case strange solvetimes occurred.
-            if t < NetworkConstants.ZAWY_AVERAGING_WINDOW * NetworkConstants.ZAWY_ADJUST_WEIGHT // 3:
-                t = NetworkConstants.ZAWY_AVERAGING_WINDOW * NetworkConstants.ZAWY_ADJUST_WEIGHT // 3
+            if t < NetworkConstants.LWMA_AVERAGING_WINDOW * NetworkConstants.LWMA_ADJUST_WEIGHT // 3:
+                t = NetworkConstants.LWMA_AVERAGING_WINDOW * NetworkConstants.LWMA_ADJUST_WEIGHT // 3
 
             new_target = t * total
 

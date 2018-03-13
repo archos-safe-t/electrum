@@ -92,7 +92,7 @@ class NetworkConstants:
         cls.CHECKPOINTS = read_json('checkpoints.json', [])
 
         cls.BTG_HEIGHT = 491407
-        cls.ZAWY_HEIGHT = sys.maxsize
+        cls.LWMA_HEIGHT = sys.maxsize
         cls.PREMINE_SIZE = 8000
 
         cls.HEADER_SIZE = 1487
@@ -111,8 +111,8 @@ class NetworkConstants:
         cls.DIGI_MAX_ADJUST_DOWN = 32
         cls.DIGI_MAX_ADJUST_UP = 16
 
-        cls.ZAWY_AVERAGING_WINDOW = 45
-        cls.ZAWY_ADJUST_WEIGHT = 13632
+        cls.LWMA_AVERAGING_WINDOW = 45
+        cls.LWMA_ADJUST_WEIGHT = 13632
 
     @classmethod
     def set_testnet(cls):
@@ -132,7 +132,7 @@ class NetworkConstants:
         cls.CHECKPOINTS = read_json('checkpoints_testnet.json', [])
 
         cls.BTG_HEIGHT = 1
-        cls.ZAWY_HEIGHT = -1
+        cls.LWMA_HEIGHT = -1
         cls.PREMINE_SIZE = 50
 
         cls.HEADER_SIZE = 1487
@@ -151,8 +151,8 @@ class NetworkConstants:
         cls.DIGI_MAX_ADJUST_DOWN = 32
         cls.DIGI_MAX_ADJUST_UP = 16
 
-        cls.ZAWY_AVERAGING_WINDOW = 45
-        cls.ZAWY_ADJUST_WEIGHT = 13632
+        cls.LWMA_AVERAGING_WINDOW = 45
+        cls.LWMA_ADJUST_WEIGHT = 13632
 
     @classmethod
     def set_regtest(cls):
@@ -172,7 +172,7 @@ class NetworkConstants:
         cls.CHECKPOINTS = read_json('checkpoints_regtest.json', [])
 
         cls.BTG_HEIGHT = 2000
-        cls.ZAWY_HEIGHT = -1
+        cls.LWMA_HEIGHT = -1
         cls.PREMINE_SIZE = 10
 
         cls.HEADER_SIZE = 177
@@ -191,8 +191,8 @@ class NetworkConstants:
         cls.DIGI_MAX_ADJUST_DOWN = 32
         cls.DIGI_MAX_ADJUST_UP = 16
 
-        cls.ZAWY_AVERAGING_WINDOW = 45
-        cls.ZAWY_ADJUST_WEIGHT = 13632
+        cls.LWMA_AVERAGING_WINDOW = 45
+        cls.LWMA_ADJUST_WEIGHT = 13632
 
 
 NetworkConstants.set_mainnet()
