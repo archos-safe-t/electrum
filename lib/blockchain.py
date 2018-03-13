@@ -507,6 +507,8 @@ class Blockchain(util.PrintError):
             t = 0
             j = 0
 
+            assert (height - NetworkConstants.ZAWY_AVERAGING_WINDOW) > 0:
+                
             # Loop through N most recent blocks.  "< height", not "<=".
             # height-1 = most recently solved block
             for i in range(height - NetworkConstants.ZAWY_AVERAGING_WINDOW, height):
