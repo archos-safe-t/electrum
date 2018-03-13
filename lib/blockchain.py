@@ -404,6 +404,12 @@ class Blockchain(util.PrintError):
             return None
         return deserialize_header(h, height)
 
+    def get_header(self, height, headers=None):
+        if headers is None:
+            headers = {}
+        
+        return headers[height] if height in headers else self.read_header(height)
+        
     def get_hash(self, height):
         if height == -1:
             return '0000000000000000000000000000000000000000000000000000000000000000'
@@ -429,7 +435,7 @@ class Blockchain(util.PrintError):
             h, t = self.checkpoints[((height // difficulty_adjustment_interval()) - 1)]
             new_target = t
         # Check for prefork
-        elif not is_postfork(height):
+        elif height < NetworkConstants.BTG_HEIGHT:
             new_target = self.get_legacy_target(height, headers)
         # Premine
         elif height < NetworkConstants.BTG_HEIGHT + NetworkConstants.PREMINE_SIZE:
@@ -448,11 +454,13 @@ class Blockchain(util.PrintError):
 
     def get_legacy_target(self, height, headers):
         last_height = (height - 1)
-        last = headers[last_height] if last_height in headers else self.read_header(last_height)
+        last = self.get_header(last_height, headers)
 
-        if height % difficulty_adjustment_interval() != 0:
-            if NetworkConstants.TESTNET or NetworkConstants.REGTEST:
-                cur = headers[height] if height in headers else self.read_header(height)
+        if NetworkConstants.REGTEST:
+            new_target = self.bits_to_target(last.get('bits'))
+        elif height % difficulty_adjustment_interval() != 0:
+            if NetworkConstants.TESTNET:
+                cur = self.get_header(height, headers)
 
                 # Special testnet handling
                 if cur.get('timestamp') > last.get('timestamp') + NetworkConstants.POW_TARGET_SPACING * 2:
@@ -460,19 +468,17 @@ class Blockchain(util.PrintError):
                 else:
                     # Return the last non-special-min-difficulty-rules-block
                     prev_height = last_height - 1
-                    prev = headers[prev_height] if prev_height in headers else self.read_header(prev_height)
+                    prev = self.get_header(prev_height, headers)
 
                     while prev is not None and last.get('block_height') % difficulty_adjustment_interval() != 0 \
                             and last.get('bits') == NetworkConstants.POW_LIMIT:
                         last = prev
                         prev_height -= 1
-                        prev = headers[prev_height] if prev_height in headers else self.read_header(prev_height)
+                        prev = self.get_header(prev_height, headers)
 
                     new_target = self.bits_to_target(last.get('bits'))
             else:
                 new_target = self.bits_to_target(last.get('bits'))
-        elif NetworkConstants.REGTEST:
-            new_target = self.bits_to_target(last.get('bits'))
         else:
             first = self.read_header(height - difficulty_adjustment_interval())
             target = self.bits_to_target(last.get('bits'))
@@ -487,15 +493,15 @@ class Blockchain(util.PrintError):
         return new_target
 
     def get_zawy_lwma_target(self, height, headers):
-        cur = headers[height] if height in headers else self.read_header(height)
+        cur = self.get_header(height, headers)
         last_height = (height - 1)
-        last = headers[last_height] if last_height in headers else self.read_header(last_height)
+        last = self.get_header(last_height, headers)
 
         # Special testnet handling
-        if (NetworkConstants.TESTNET or NetworkConstants.REGTEST) and cur.get('timestamp') > last.get('timestamp') + NetworkConstants.POW_TARGET_SPACING * 2:
+        if NetworkConstants.REGTEST:
+            new_target = self.get_target(height - 1)
+        elif NetworkConstants.TESTNET and cur.get('timestamp') > last.get('timestamp') + NetworkConstants.POW_TARGET_SPACING * 2:
             new_target = NetworkConstants.POW_LIMIT
-        elif NetworkConstants.REGTEST:
-            new_target = self.get_prev_target(height)
         else:
             total = 0
             t = 0
@@ -504,9 +510,9 @@ class Blockchain(util.PrintError):
             # Loop through N most recent blocks.  "< height", not "<=".
             # height-1 = most recently solved block
             for i in range(height - NetworkConstants.ZAWY_AVERAGING_WINDOW, height):
-                cur = headers[i] if i in headers else self.read_header(i)
+                cur = self.get_header(i, headers)
                 prev_height = (i - 1)
-                prev = headers[prev_height] if prev_height in headers else self.read_header(prev_height)
+                prev = self.get_header(prev_height, headers)
 
                 solvetime = cur.get('timestamp') - prev.get('timestamp')
 
@@ -528,7 +534,7 @@ class Blockchain(util.PrintError):
     def get_digishield_target(self, height, headers):
         pow_limit = NetworkConstants.POW_LIMIT
         height -= 1
-        last = headers[height] if height in headers else self.read_header(height)
+        last = self.get_header(height, headers)
 
         if last is None:
             new_target = pow_limit
@@ -542,7 +548,7 @@ class Blockchain(util.PrintError):
             while i < NetworkConstants.DIGI_AVERAGING_WINDOW and first is not None:
                 total += self.bits_to_target(first.get('bits'))
                 prev_height = height - i - 1
-                first = headers[prev_height] if prev_height in headers else self.read_header(prev_height)
+                first = self.get_header(prev_height, headers)
                 i += 1
 
             # This should never happen else we have a serious problem
@@ -569,7 +575,7 @@ class Blockchain(util.PrintError):
         return new_target
 
     def get_mediantime_past(self, headers, start_height):
-        header = headers[start_height] if start_height in headers else self.read_header(start_height)
+        header = self.get_header(start_height, headers)
 
         times = []
         i = 0
@@ -577,7 +583,7 @@ class Blockchain(util.PrintError):
         while i < 11 and header is not None:
             times.append(header.get('timestamp'))
             prev_height = start_height - i - 1
-            header = headers[prev_height] if prev_height in headers else self.read_header(prev_height)
+            header = self.get_header(prev_height, headers)
             i += 1
 
         times.sort()
