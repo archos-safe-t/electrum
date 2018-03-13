@@ -173,8 +173,6 @@ class NetworkConstants:
 
         cls.BTG_HEIGHT = 2000
         cls.ZAWY_HEIGHT = -1
-        #cls.BTG_HEIGHT = 3000
-        #cls.ZAWY_HEIGHT = sys.maxsize
         cls.PREMINE_SIZE = 10
 
         cls.HEADER_SIZE = 177
