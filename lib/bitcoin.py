@@ -36,6 +36,7 @@ from .util import bfh, bh2u, to_string, print_error, InvalidPassword, assert_byt
 from . import version
 from . import segwit_addr
 from struct import unpack_from, unpack
+import sys
 
 
 def read_json(filename, default):
@@ -77,104 +78,140 @@ class NetworkConstants:
     def set_mainnet(cls):
         cls.TESTNET = False
         cls.REGTEST = False
+
         cls.WIF_PREFIX = 0x80
         cls.ADDRTYPE_P2PKH = 38
         cls.ADDRTYPE_P2SH = 23
         cls.SEGWIT_HRP = "btg"
+
         cls.HEADERS_URL = "https://headers.bitcoingold.org/blockchain_headers"
         cls.GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+
         cls.DEFAULT_PORTS = {'t': '50001', 's': '50002'}
         cls.DEFAULT_SERVERS = read_json('servers.json', {})
         cls.CHECKPOINTS = read_json('checkpoints.json', [])
-        cls.FORK_HEIGHT = 491407
+
+        cls.BTG_HEIGHT = 491407
+        cls.LWMA_HEIGHT = sys.maxsize
         cls.PREMINE_SIZE = 8000
+
         cls.HEADER_SIZE = 1487
         cls.HEADER_SIZE_LEGACY = 141
+
         cls.EQUIHASH_N = 200
         cls.EQUIHASH_K = 9
+
         cls.POW_LIMIT = 0x0007ffffffff0000000000000000000000000000000000000000000000000000
         cls.POW_LIMIT_START = 0x0000000fffff0000000000000000000000000000000000000000000000000000
         cls.POW_LIMIT_LEGACY = 0x00000000ffff0000000000000000000000000000000000000000000000000000
-        cls.POW_AVERAGING_WINDOW = 30
-        cls.POW_MAX_ADJUST_DOWN = 32
-        cls.POW_MAX_ADJUST_UP = 16
         cls.POW_TARGET_SPACING = 10 * 60
         cls.POW_TARGET_TIMESPAN_LEGACY = 14 * 24 * 60 * 60
+
+        cls.DIGI_AVERAGING_WINDOW = 30
+        cls.DIGI_MAX_ADJUST_DOWN = 32
+        cls.DIGI_MAX_ADJUST_UP = 16
+
+        cls.LWMA_AVERAGING_WINDOW = 45
+        cls.LWMA_ADJUST_WEIGHT = 13632
 
     @classmethod
     def set_testnet(cls):
         cls.TESTNET = True
         cls.REGTEST = False
+
         cls.WIF_PREFIX = 0xef
         cls.ADDRTYPE_P2PKH = 111
         cls.ADDRTYPE_P2SH = 196
         cls.SEGWIT_HRP = "tbtg"
+
         cls.HEADERS_URL = "https://headers.bitcoingold.org/testnet_headers"
-        cls.GENESIS = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
+        cls.GENESIS = "00000000e0781ebe24b91eedc293adfea2f557b53ec379e78959de3853e6f9f6"
+
         cls.DEFAULT_PORTS = {'t': '51001', 's': '51002'}
         cls.DEFAULT_SERVERS = read_json('servers_testnet.json', {})
         cls.CHECKPOINTS = read_json('checkpoints_testnet.json', [])
-        cls.FORK_HEIGHT = 1
+
+        cls.BTG_HEIGHT = 1
+        cls.LWMA_HEIGHT = -1
         cls.PREMINE_SIZE = 50
+
         cls.HEADER_SIZE = 1487
         cls.HEADER_SIZE_LEGACY = 141
+
         cls.EQUIHASH_N = 200
         cls.EQUIHASH_K = 9
+
         cls.POW_LIMIT = 0x0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-        cls.POW_LIMIT_START = 0x0000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        cls.POW_LIMIT_START = 0x0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         cls.POW_LIMIT_LEGACY = 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-        cls.POW_AVERAGING_WINDOW = 30
-        cls.POW_MAX_ADJUST_DOWN = 32
-        cls.POW_MAX_ADJUST_UP = 16
         cls.POW_TARGET_SPACING = 10 * 60
         cls.POW_TARGET_TIMESPAN_LEGACY = 14 * 24 * 60 * 60
+
+        cls.DIGI_AVERAGING_WINDOW = 30
+        cls.DIGI_MAX_ADJUST_DOWN = 32
+        cls.DIGI_MAX_ADJUST_UP = 16
+
+        cls.LWMA_AVERAGING_WINDOW = 45
+        cls.LWMA_ADJUST_WEIGHT = 13632
 
     @classmethod
     def set_regtest(cls):
         cls.TESTNET = False
         cls.REGTEST = True
+
         cls.WIF_PREFIX = 0xef
         cls.ADDRTYPE_P2PKH = 111
         cls.ADDRTYPE_P2SH = 196
         cls.SEGWIT_HRP = "tbtg"
+
         cls.HEADERS_URL = "https://headers.bitcoingold.org/blockchain_headers"
         cls.GENESIS = "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
+
         cls.DEFAULT_PORTS = {'t': '50001', 's': '50002'}
         cls.DEFAULT_SERVERS = read_json('servers.json', {})
         cls.CHECKPOINTS = read_json('checkpoints_regtest.json', [])
-        cls.FORK_HEIGHT = 3000
+
+        cls.BTG_HEIGHT = 2000
+        cls.LWMA_HEIGHT = -1
         cls.PREMINE_SIZE = 10
+
         cls.HEADER_SIZE = 177
         cls.HEADER_SIZE_LEGACY = 141
+
         cls.EQUIHASH_N = 48
         cls.EQUIHASH_K = 5
+
         cls.POW_LIMIT = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         cls.POW_LIMIT_START = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         cls.POW_LIMIT_LEGACY = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-        cls.POW_AVERAGING_WINDOW = 30
-        cls.POW_MAX_ADJUST_DOWN = 16
-        cls.POW_MAX_ADJUST_UP = 32
         cls.POW_TARGET_SPACING = 10 * 60
         cls.POW_TARGET_TIMESPAN_LEGACY = 14 * 24 * 60 * 60
+
+        cls.DIGI_AVERAGING_WINDOW = 30
+        cls.DIGI_MAX_ADJUST_DOWN = 32
+        cls.DIGI_MAX_ADJUST_UP = 16
+
+        cls.LWMA_AVERAGING_WINDOW = 45
+        cls.LWMA_ADJUST_WEIGHT = 13632
 
 
 NetworkConstants.set_mainnet()
 
 
 def averaging_window_timespan():
-    return NetworkConstants.POW_AVERAGING_WINDOW * NetworkConstants.POW_TARGET_SPACING
+    return NetworkConstants.DIGI_AVERAGING_WINDOW * NetworkConstants.POW_TARGET_SPACING
 
 
 def min_actual_timespan():
-    return (averaging_window_timespan() * (100 - NetworkConstants.POW_MAX_ADJUST_UP)) // 100
+    return (averaging_window_timespan() * (100 - NetworkConstants.DIGI_MAX_ADJUST_UP)) // 100
 
 
 def max_actual_timespan():
-    return (averaging_window_timespan() * (100 + NetworkConstants.POW_MAX_ADJUST_DOWN)) // 100
+    return (averaging_window_timespan() * (100 + NetworkConstants.DIGI_MAX_ADJUST_DOWN)) // 100
 
 
 def is_postfork(height):
-    return height >= NetworkConstants.FORK_HEIGHT
+    return height >= NetworkConstants.BTG_HEIGHT
 
 
 def needs_retarget(height):
@@ -186,7 +223,7 @@ def difficulty_adjustment_interval():
 
 
 def get_header_size(height):
-    return NetworkConstants.HEADER_SIZE if height >= NetworkConstants.FORK_HEIGHT \
+    return NetworkConstants.HEADER_SIZE if height >= NetworkConstants.BTG_HEIGHT \
         else NetworkConstants.HEADER_SIZE_LEGACY
 
 

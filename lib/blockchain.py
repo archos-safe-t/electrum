@@ -145,7 +145,7 @@ class Blockchain(util.PrintError):
     """
 
     def __init__(self, config, checkpoint, parent_id):
-        self.fork_byte_offset = NetworkConstants.FORK_HEIGHT * NetworkConstants.HEADER_SIZE_LEGACY
+        self.fork_byte_offset = NetworkConstants.BTG_HEIGHT * NetworkConstants.HEADER_SIZE_LEGACY
         self.config = config
         # interface catching up
         self.catch_up = None
@@ -256,14 +256,13 @@ class Blockchain(util.PrintError):
             header_size = get_header_size(height)
             raw_header = data[offset:(offset + header_size)]
             header = deserialize_header(raw_header, height)
+            headers[height] = header
 
             # Check retarget
             if needs_retarget(height) or target == 0:
                 target = self.get_target(height, headers)
 
             self.verify_header(header, prev_hash, target)
-
-            headers[height] = header
             prev_hash = hash_header(header, height)
             offset += header_size
             height += 1
@@ -310,8 +309,8 @@ class Blockchain(util.PrintError):
         size = 0
 
         if not is_postfork(parent.checkpoint) and is_postfork(checkpoint):
-            prb = (NetworkConstants.FORK_HEIGHT - parent.checkpoint)
-            pob = checkpoint - NetworkConstants.FORK_HEIGHT
+            prb = (NetworkConstants.BTG_HEIGHT - parent.checkpoint)
+            pob = checkpoint - NetworkConstants.BTG_HEIGHT
             offset = (prb * NetworkConstants.HEADER_SIZE_LEGACY) + (pob * NetworkConstants.HEADER_SIZE)
             size = parent_branch_size * NetworkConstants.HEADER_SIZE
         else:
@@ -405,6 +404,12 @@ class Blockchain(util.PrintError):
             return None
         return deserialize_header(h, height)
 
+    def get_header(self, height, headers=None):
+        if headers is None:
+            headers = {}
+        
+        return headers[height] if height in headers else self.read_header(height)
+        
     def get_hash(self, height):
         if height == -1:
             return '0000000000000000000000000000000000000000000000000000000000000000'
@@ -419,94 +424,160 @@ class Blockchain(util.PrintError):
             return hash_header(self.read_header(height), height)
 
     def get_target(self, height, headers=None):
-        if NetworkConstants.TESTNET:
-            new_target = 0
-        elif height == 0:
+        if headers is None:
+            headers = {}
+
+        # Check for genesis
+        if height == 0:
             new_target = NetworkConstants.POW_LIMIT_LEGACY
+        # Check for valid checkpoint
         elif height % difficulty_adjustment_interval() == 0 and 0 <= ((height // difficulty_adjustment_interval()) - 1) < len(self.checkpoints):
             h, t = self.checkpoints[((height // difficulty_adjustment_interval()) - 1)]
             new_target = t
-        elif is_postfork(height):
-            new_target = self.get_postfork_target(height, headers)
-        else:
-            if NetworkConstants.REGTEST or height % difficulty_adjustment_interval() != 0:
-                last = self.read_header(height - 1)
-                bits = last.get('bits')
-                new_target = self.bits_to_target(bits)
-            else:
-                new_target = self.get_prefork_target(height)
-
-        return new_target
-
-    def get_prefork_target(self, height):
-        first = self.read_header(height - difficulty_adjustment_interval())
-        last = self.read_header(height - 1)
-        bits = last.get('bits')
-        target = self.bits_to_target(bits)
-
-        actual_timespan = last.get('timestamp') - first.get('timestamp')
-        target_timespan = 14 * 24 * 60 * 60
-        actual_timespan = max(actual_timespan, target_timespan // 4)
-        actual_timespan = min(actual_timespan, target_timespan * 4)
-
-        new_target = min(NetworkConstants.POW_LIMIT_LEGACY, (target * actual_timespan) // target_timespan)
-
-        return new_target
-
-    def get_postfork_target(self, height, headers=None):
+        # Check for prefork
+        elif height < NetworkConstants.BTG_HEIGHT:
+            new_target = self.get_legacy_target(height, headers)
         # Premine
-        if (height < NetworkConstants.FORK_HEIGHT + NetworkConstants.PREMINE_SIZE) or NetworkConstants.REGTEST:
+        elif height < NetworkConstants.BTG_HEIGHT + NetworkConstants.PREMINE_SIZE:
             new_target = NetworkConstants.POW_LIMIT
-            # Initial start (reduced difficulty)
-        elif height < NetworkConstants.FORK_HEIGHT + NetworkConstants.PREMINE_SIZE + NetworkConstants.POW_AVERAGING_WINDOW:
+        # Initial start (reduced difficulty)
+        elif height < NetworkConstants.BTG_HEIGHT + NetworkConstants.PREMINE_SIZE + NetworkConstants.DIGI_AVERAGING_WINDOW:
             new_target = NetworkConstants.POW_LIMIT_START
-            # BTG default
+        # Digishield
+        elif height < NetworkConstants.LWMA_HEIGHT:
+            new_target = self.get_digishield_target(height, headers)
+        # Zawy LWMA
         else:
-            if headers is None:
-                headers = {}
+            new_target = self.get_lwma_target(height, headers)
 
-            pow_limit = NetworkConstants.POW_LIMIT
-            height -= 1
-            last = headers[height] if height in headers else self.read_header(height)
+        return new_target
 
-            if last is not None:
-                first = last
-                total = 0
-                i = 0
+    def get_legacy_target(self, height, headers):
+        last_height = (height - 1)
+        last = self.get_header(last_height, headers)
 
-                while i < NetworkConstants.POW_AVERAGING_WINDOW and first is not None:
-                    total += self.bits_to_target(first.get('bits'))
-                    prev_height = height - i - 1
-                    first = headers[prev_height] if prev_height in headers else self.read_header(prev_height)
-                    i += 1
+        if NetworkConstants.REGTEST:
+            new_target = self.bits_to_target(last.get('bits'))
+        elif height % difficulty_adjustment_interval() != 0:
+            if NetworkConstants.TESTNET:
+                cur = self.get_header(height, headers)
 
-                # This should never happen else we have a serious problem
-                assert first is not None
+                # Special testnet handling
+                if cur.get('timestamp') > last.get('timestamp') + NetworkConstants.POW_TARGET_SPACING * 2:
+                    new_target = NetworkConstants.POW_LIMIT_LEGACY
+                else:
+                    # Return the last non-special-min-difficulty-rules-block
+                    prev_height = last_height - 1
+                    prev = self.get_header(prev_height, headers)
 
-                avg = total // NetworkConstants.POW_AVERAGING_WINDOW
-                actual_timespan = self.get_mediantime_past(headers, last.get('block_height')) \
-                    - self.get_mediantime_past(headers, first.get('block_height'))
+                    while prev is not None and last.get('block_height') % difficulty_adjustment_interval() != 0 \
+                            and last.get('bits') == NetworkConstants.POW_LIMIT:
+                        last = prev
+                        prev_height -= 1
+                        prev = self.get_header(prev_height, headers)
 
-                if actual_timespan < min_actual_timespan():
-                    actual_timespan = min_actual_timespan()
-
-                if actual_timespan > max_actual_timespan():
-                    actual_timespan = max_actual_timespan()
-
-                avg = avg // averaging_window_timespan()
-                avg *= actual_timespan
-
-                if avg > pow_limit:
-                    avg = pow_limit
-
-                new_target = int(avg)
+                    new_target = self.bits_to_target(last.get('bits'))
             else:
-                new_target = pow_limit
+                new_target = self.bits_to_target(last.get('bits'))
+        else:
+            first = self.read_header(height - difficulty_adjustment_interval())
+            target = self.bits_to_target(last.get('bits'))
+
+            actual_timespan = last.get('timestamp') - first.get('timestamp')
+            target_timespan = 14 * 24 * 60 * 60
+            actual_timespan = max(actual_timespan, target_timespan // 4)
+            actual_timespan = min(actual_timespan, target_timespan * 4)
+
+            new_target = min(NetworkConstants.POW_LIMIT_LEGACY, (target * actual_timespan) // target_timespan)
+
+        return new_target
+
+    def get_lwma_target(self, height, headers):
+        cur = self.get_header(height, headers)
+        last_height = (height - 1)
+        last = self.get_header(last_height, headers)
+
+        # Special testnet handling
+        if NetworkConstants.REGTEST:
+            new_target = self.get_target(height - 1)
+        elif NetworkConstants.TESTNET and cur.get('timestamp') > last.get('timestamp') + NetworkConstants.POW_TARGET_SPACING * 2:
+            new_target = NetworkConstants.POW_LIMIT
+        else:
+            total = 0
+            t = 0
+            j = 0
+
+            assert (height - NetworkConstants.LWMA_AVERAGING_WINDOW) > 0
+                
+            # Loop through N most recent blocks.  "< height", not "<=".
+            # height-1 = most recently solved block
+            for i in range(height - NetworkConstants.LWMA_AVERAGING_WINDOW, height):
+                cur = self.get_header(i, headers)
+                prev_height = (i - 1)
+                prev = self.get_header(prev_height, headers)
+
+                solvetime = cur.get('timestamp') - prev.get('timestamp')
+
+                j += 1
+                t += solvetime * j
+                total += self.bits_to_target(cur.get('bits')) // (NetworkConstants.LWMA_ADJUST_WEIGHT * NetworkConstants.LWMA_AVERAGING_WINDOW * NetworkConstants.LWMA_AVERAGING_WINDOW)
+
+            # Keep t reasonable in case strange solvetimes occurred.
+            if t < NetworkConstants.LWMA_AVERAGING_WINDOW * NetworkConstants.LWMA_ADJUST_WEIGHT // 3:
+                t = NetworkConstants.LWMA_AVERAGING_WINDOW * NetworkConstants.LWMA_ADJUST_WEIGHT // 3
+
+            new_target = t * total
+
+            if new_target > NetworkConstants.POW_LIMIT:
+                new_target = NetworkConstants.POW_LIMIT
+
+        return new_target
+
+    def get_digishield_target(self, height, headers):
+        pow_limit = NetworkConstants.POW_LIMIT
+        height -= 1
+        last = self.get_header(height, headers)
+
+        if last is None:
+            new_target = pow_limit
+        elif NetworkConstants.REGTEST:
+            new_target = self.bits_to_target(last.get('bits'))
+        else:
+            first = last
+            total = 0
+            i = 0
+
+            while i < NetworkConstants.DIGI_AVERAGING_WINDOW and first is not None:
+                total += self.bits_to_target(first.get('bits'))
+                prev_height = height - i - 1
+                first = self.get_header(prev_height, headers)
+                i += 1
+
+            # This should never happen else we have a serious problem
+            assert first is not None
+
+            avg = total // NetworkConstants.DIGI_AVERAGING_WINDOW
+            actual_timespan = self.get_mediantime_past(headers, last.get('block_height')) \
+                - self.get_mediantime_past(headers, first.get('block_height'))
+
+            if actual_timespan < min_actual_timespan():
+                actual_timespan = min_actual_timespan()
+
+            if actual_timespan > max_actual_timespan():
+                actual_timespan = max_actual_timespan()
+
+            avg = avg // averaging_window_timespan()
+            avg *= actual_timespan
+
+            if avg > pow_limit:
+                avg = pow_limit
+
+            new_target = int(avg)
 
         return new_target
 
     def get_mediantime_past(self, headers, start_height):
-        header = headers[start_height] if start_height in headers else self.read_header(start_height)
+        header = self.get_header(start_height, headers)
 
         times = []
         i = 0
@@ -514,7 +585,7 @@ class Blockchain(util.PrintError):
         while i < 11 and header is not None:
             times.append(header.get('timestamp'))
             prev_height = start_height - i - 1
-            header = headers[prev_height] if prev_height in headers else self.read_header(prev_height)
+            header = self.get_header(prev_height, headers)
             i += 1
 
         times.sort()
@@ -561,7 +632,7 @@ class Blockchain(util.PrintError):
             return False
         if prev_hash != header.get('prev_block_hash'):
             return False
-        target = self.get_target(height)
+        target = self.get_target(height, {height: header})
         try:
             self.verify_header(header, prev_hash, target)
         except BaseException as e:
@@ -584,8 +655,8 @@ class Blockchain(util.PrintError):
         header_size = get_header_size(height)
 
         if is_postfork(height) and not is_postfork(self.checkpoint):
-            pr = (NetworkConstants.FORK_HEIGHT - self.checkpoint) * NetworkConstants.HEADER_SIZE_LEGACY
-            po = (height - NetworkConstants.FORK_HEIGHT) * NetworkConstants.HEADER_SIZE
+            pr = (NetworkConstants.BTG_HEIGHT - self.checkpoint) * NetworkConstants.HEADER_SIZE_LEGACY
+            po = (height - NetworkConstants.BTG_HEIGHT) * NetworkConstants.HEADER_SIZE
             offset = pr + po
         else:
             offset = abs(delta) * header_size
