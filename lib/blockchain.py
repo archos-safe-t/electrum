@@ -23,7 +23,7 @@
 import gzip
 import threading
 
-from equihash import is_gbp_valid
+from .equihash import is_gbp_valid
 from . import util
 from .bitcoin import *
 
