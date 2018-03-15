@@ -25,6 +25,9 @@ import json
 import locale
 import platform
 import traceback
+import os
+import sys
+import subprocess
 
 import requests
 from PyQt5.QtCore import QObject
@@ -33,8 +36,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 
 from electrum.i18n import _
-import sys
-from electrum import ELECTRUM_VERSION
+from electrum import ELECTRUM_VERSION, bitcoin, constants
 
 issue_template = """<h2>Traceback</h2>
 <pre>
@@ -43,7 +45,7 @@ issue_template = """<h2>Traceback</h2>
 
 <h2>Additional information</h2>
 <ul>
-  <li>Electrum version: {electrum_version}</li>
+  <li>Electrum version: {app_version}</li>
   <li>Operating system: {os}</li>
   <li>Wallet type: {wallet_type}</li>
   <li>Locale: {locale}</li>
@@ -105,12 +107,24 @@ class Exception_Window(QWidget):
         self.show()
 
     def send_report(self):
+        if constants.net.GENESIS[-4:] not in ["4943", "e26f"] and ".electrum.org" in report_server:
+            # Gah! Some kind of altcoin wants to send us crash reports.
+            self.main_window.show_critical(_("Please report this issue manually."))
+            return
         report = self.get_traceback_info()
         report.update(self.get_additional_info())
         report = json.dumps(report)
-        response = requests.post(report_server, data=report)
-        QMessageBox.about(self, "Crash report", response.text)
-        self.close()
+        try:
+            response = requests.post(report_server, data=report, timeout=20)
+        except BaseException as e:
+            traceback.print_exc(file=sys.stderr)
+            self.main_window.show_critical(_('There was a problem with the automatic reporting:') + '\n' +
+                                           str(e) + '\n' +
+                                           _("Please report this issue manually."))
+            return
+        else:
+            QMessageBox.about(self, "Crash report", response.text)
+            self.close()
 
     def on_close(self):
         Exception_Window._active_window = None
@@ -142,7 +156,7 @@ class Exception_Window(QWidget):
 
     def get_additional_info(self):
         args = {
-            "electrum_version": ELECTRUM_VERSION,
+            "app_version": ELECTRUM_VERSION,
             "os": platform.platform(),
             "wallet_type": "unknown",
             "locale": locale.getdefaultlocale()[0],
@@ -153,12 +167,23 @@ class Exception_Window(QWidget):
         except:
             # Maybe the wallet isn't loaded yet
             pass
+        try:
+            args["app_version"] = self.get_git_version()
+        except:
+            # This is probably not running from source
+            pass
         return args
 
     def get_report_string(self):
         info = self.get_additional_info()
         info["traceback"] = "".join(traceback.format_exception(*self.exc_args))
         return issue_template.format(**info)
+
+    @staticmethod
+    def get_git_version():
+        dir = os.path.dirname(os.path.realpath(sys.argv[0]))
+        version = subprocess.check_output(['git', 'describe', '--always'], cwd=dir)
+        return str(version, "utf8").strip()
 
 
 def _show_window(*args):
