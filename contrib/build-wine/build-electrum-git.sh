@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NAME_ROOT=electrum
+NAME_ROOT=electrum-gold
 PYTHON_VERSION=3.5.4
 
 # These settings probably don't need any change

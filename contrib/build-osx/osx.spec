@@ -5,10 +5,10 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules, coll
 import sys
 import os
 
-PACKAGE='Electrum'
-PYPKG='electrum'
-MAIN_SCRIPT='electrum'
-ICONS_FILE='electrum.icns'
+PACKAGE='Electrum Gold'
+PYPKG='electrum-gold'
+MAIN_SCRIPT='electrum-gold'
+ICONS_FILE='electrum-gold.icns'
 
 for i, x in enumerate(sys.argv):
     if x == '--name':
@@ -85,13 +85,13 @@ exe = EXE(pyz,
           debug=False,
           strip=False,
           upx=True,
-          icon=electrum+ICONS_FILE,
+          icon=electrum-gold+ICONS_FILE,
           console=False)
 
 app = BUNDLE(exe,
              version = VERSION,
              name=PACKAGE + '.app',
-             icon=electrum+ICONS_FILE,
+             icon=electrum-gold+ICONS_FILE,
              bundle_identifier=None,
              info_plist={
                 'NSHighResolutionCapable': 'True',

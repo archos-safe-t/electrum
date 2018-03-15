@@ -25,6 +25,7 @@
 
 import os
 import json
+from sys import maxsize
 
 
 def read_json(filename, default):
@@ -37,71 +38,133 @@ def read_json(filename, default):
     return r
 
 
-class BitcoinMainnet:
-
+class BitcoinGoldBase(object):
     TESTNET = False
-    WIF_PREFIX = 0x80
-    ADDRTYPE_P2PKH = 0
-    ADDRTYPE_P2SH = 5
-    SEGWIT_HRP = "bc"
-    GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+    REGTEST = False
+
     DEFAULT_PORTS = {'t': '50001', 's': '50002'}
+
+    HEADER_SIZE = 1487
+    HEADER_SIZE_LEGACY = 141
+
+    CHECKPOINTS = []
+
+    EQUIHASH_N = 200
+    EQUIHASH_K = 9
+
+    POW_TARGET_SPACING = 10 * 60
+    POW_TARGET_TIMESPAN_LEGACY = 14 * 24 * 60 * 60
+
+    DIGI_AVERAGING_WINDOW = 30
+    DIGI_MAX_ADJUST_DOWN = 32
+    DIGI_MAX_ADJUST_UP = 16
+
+    LWMA_AVERAGING_WINDOW = 45
+    LWMA_ADJUST_WEIGHT = 13632
+
+    CHUNK_SIZE = 252
+
+    XPRV_HEADERS = {
+        'standard': 0x0488ade4,
+        'p2wpkh-p2sh': 0x049d7878,
+        'p2wsh-p2sh': 0x295b005,
+        'p2wpkh': 0x4b2430c,
+        'p2wsh': 0x2aa7a99
+    }
+    XPUB_HEADERS = {
+        'standard': 0x0488b21e,
+        'p2wpkh-p2sh': 0x049d7cb2,
+        'p2wsh-p2sh': 0x295b43f,
+        'p2wpkh': 0x4b24746,
+        'p2wsh': 0x2aa7ed3
+    }
+
+
+class BitcoinGoldMainnet(BitcoinGoldBase):
+    WIF_PREFIX = 0x80
+    ADDRTYPE_P2PKH = 38
+    ADDRTYPE_P2SH = 23
+    SEGWIT_HRP = "btg"
+
+    HEADERS_URL = "https://headers.bitcoingold.org/blockchain_headers"
+    GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+
     DEFAULT_SERVERS = read_json('servers.json', {})
     CHECKPOINTS = read_json('checkpoints.json', [])
 
-    XPRV_HEADERS = {
-        'standard':    0x0488ade4,  # xprv
-        'p2wpkh-p2sh': 0x049d7878,  # yprv
-        'p2wsh-p2sh':  0x0295b005,  # Yprv
-        'p2wpkh':      0x04b2430c,  # zprv
-        'p2wsh':       0x02aa7a99,  # Zprv
-    }
-    XPUB_HEADERS = {
-        'standard':    0x0488b21e,  # xpub
-        'p2wpkh-p2sh': 0x049d7cb2,  # ypub
-        'p2wsh-p2sh':  0x0295b43f,  # Ypub
-        'p2wpkh':      0x04b24746,  # zpub
-        'p2wsh':       0x02aa7ed3,  # Zpub
-    }
+    BTG_HEIGHT = 491407
+    LWMA_HEIGHT = maxsize
+    PREMINE_SIZE = 8000
+
+    POW_LIMIT = 0x0007ffffffff0000000000000000000000000000000000000000000000000000
+    POW_LIMIT_START = 0x0000000fffff0000000000000000000000000000000000000000000000000000
+    POW_LIMIT_LEGACY = 0x00000000ffff0000000000000000000000000000000000000000000000000000
 
 
-class BitcoinTestnet:
-
+class BitcoinGoldTestnet(BitcoinGoldBase):
     TESTNET = True
+
     WIF_PREFIX = 0xef
     ADDRTYPE_P2PKH = 111
     ADDRTYPE_P2SH = 196
-    SEGWIT_HRP = "tb"
-    GENESIS = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
+    SEGWIT_HRP = "tbtg"
+
+    HEADERS_URL = "https://headers.bitcoingold.org/testnet_headers"
+    GENESIS = "00000000e0781ebe24b91eedc293adfea2f557b53ec379e78959de3853e6f9f6"
+
     DEFAULT_PORTS = {'t': '51001', 's': '51002'}
     DEFAULT_SERVERS = read_json('servers_testnet.json', {})
-    CHECKPOINTS = read_json('checkpoints_testnet.json', [])
 
-    XPRV_HEADERS = {
-        'standard':    0x04358394,  # tprv
-        'p2wpkh-p2sh': 0x044a4e28,  # uprv
-        'p2wsh-p2sh':  0x024285b5,  # Uprv
-        'p2wpkh':      0x045f18bc,  # vprv
-        'p2wsh':       0x02575048,  # Vprv
-    }
-    XPUB_HEADERS = {
-        'standard':    0x043587cf,  # tpub
-        'p2wpkh-p2sh': 0x044a5262,  # upub
-        'p2wsh-p2sh':  0x024285ef,  # Upub
-        'p2wpkh':      0x045f1cf6,  # vpub
-        'p2wsh':       0x02575483,  # Vpub
-    }
+    BTG_HEIGHT = 1
+    LWMA_HEIGHT = -1
+    PREMINE_SIZE = 50
+
+    POW_LIMIT = 0x0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    POW_LIMIT_START = 0x0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    POW_LIMIT_LEGACY = 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+
+class BitcoinGoldRegtest(BitcoinGoldBase):
+    REGTEST = True
+
+    WIF_PREFIX = 0xef
+    ADDRTYPE_P2PKH = 111
+    ADDRTYPE_P2SH = 196
+    SEGWIT_HRP = "tbtg"
+
+    HEADERS_URL = "https://headers.bitcoingold.org/blockchain_headers"
+    GENESIS = "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
+
+    DEFAULT_SERVERS = read_json('servers_regtest.json', {})
+
+    BTG_HEIGHT = 2000
+    LWMA_HEIGHT = -1
+    PREMINE_SIZE = 10
+
+    HEADER_SIZE = 177
+
+    EQUIHASH_N = 48
+    EQUIHASH_K = 5
+
+    POW_LIMIT = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    POW_LIMIT_START = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    POW_LIMIT_LEGACY = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
 
 # don't import net directly, import the module instead (so that net is singleton)
-net = BitcoinMainnet
+net = BitcoinGoldMainnet
 
 
 def set_mainnet():
     global net
-    net = BitcoinMainnet
+    net = BitcoinGoldMainnet
 
 
 def set_testnet():
     global net
-    net = BitcoinTestnet
+    net = BitcoinGoldTestnet
+
+
+def set_regtest():
+    global net
+    net = BitcoinGoldRegtest

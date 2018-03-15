@@ -11,7 +11,7 @@ else:
     raise BaseException('no name')
 
 
-home = 'C:\\electrum\\'
+home = 'C:\\electrum-gold\\'
 
 # see https://github.com/pyinstaller/pyinstaller/issues/2005
 hiddenimports = []
@@ -31,7 +31,7 @@ datas = [
     (home+'lib/servers.json', 'electrum'),
     (home+'lib/checkpoints.json', 'electrum'),
     (home+'lib/servers_testnet.json', 'electrum'),
-    (home+'lib/checkpoints_testnet.json', 'electrum'),
+    (home+'lib/servers_regtest.json', 'electrum'),
     (home+'lib/wordlist/english.txt', 'electrum/wordlist'),
     (home+'lib/locale', 'electrum/locale'),
     (home+'plugins', 'electrum_plugins'),
@@ -86,11 +86,11 @@ exe_standalone = EXE(
     a.scripts,
     a.binaries,
     a.datas, 
-    name=os.path.join('build\\pyi.win32\\electrum', cmdline_name + ".exe"),
+    name=os.path.join('build\\pyi.win32\\electrum-gold', cmdline_name + ".exe"),
     debug=False,
     strip=None,
     upx=False,
-    icon=home+'icons/electrum.ico',
+    icon=home+'icons/electrum-gold.ico',
     console=False)
     # console=True makes an annoying black box pop up, but it does make Electrum output command line commands, with this turned off no output will be given but commands can still be used
 
@@ -99,11 +99,11 @@ exe_portable = EXE(
     a.scripts,
     a.binaries,
     a.datas + [ ('is_portable', 'README.md', 'DATA' ) ],
-    name=os.path.join('build\\pyi.win32\\electrum', cmdline_name + "-portable.exe"),
+    name=os.path.join('build\\pyi.win32\\electrum-gold', cmdline_name + "-portable.exe"),
     debug=False,
     strip=None,
     upx=False,
-    icon=home+'icons/electrum.ico',
+    icon=home+'icons/electrum-gold.ico',
     console=False)
 
 #####
@@ -113,11 +113,11 @@ exe_dependent = EXE(
     pyz,
     a.scripts,
     exclude_binaries=True,
-    name=os.path.join('build\\pyi.win32\\electrum', cmdline_name),
+    name=os.path.join('build\\pyi.win32\\electrum-gold', cmdline_name),
     debug=False,
     strip=None,
     upx=False,
-    icon=home+'icons/electrum.ico',
+    icon=home+'icons/electrum-gold.ico',
     console=False)
 
 coll = COLLECT(
@@ -128,6 +128,6 @@ coll = COLLECT(
     strip=None,
     upx=True,
     debug=False,
-    icon=home+'icons/electrum.ico',
+    icon=home+'icons/electrum-gold.ico',
     console=False,
-    name=os.path.join('dist', 'electrum'))
+    name=os.path.join('dist', 'electrum-gold'))

@@ -27,7 +27,6 @@ import hashlib
 import base64
 import hmac
 import os
-import json
 
 import ecdsa
 import pyaes
@@ -39,21 +38,20 @@ from struct import unpack_from, unpack
 from . import constants
 
 
-
 def averaging_window_timespan():
-    return net.DIGI_AVERAGING_WINDOW * net.POW_TARGET_SPACING
+    return constants.net.DIGI_AVERAGING_WINDOW * constants.net.POW_TARGET_SPACING
 
 
 def min_actual_timespan():
-    return (averaging_window_timespan() * (100 - net.DIGI_MAX_ADJUST_UP)) // 100
+    return (averaging_window_timespan() * (100 - constants.net.DIGI_MAX_ADJUST_UP)) // 100
 
 
 def max_actual_timespan():
-    return (averaging_window_timespan() * (100 + net.DIGI_MAX_ADJUST_DOWN)) // 100
+    return (averaging_window_timespan() * (100 + constants.net.DIGI_MAX_ADJUST_DOWN)) // 100
 
 
 def is_postfork(height):
-    return height >= net.BTG_HEIGHT
+    return height >= constants.net.BTG_HEIGHT
 
 
 def needs_retarget(height):
@@ -61,12 +59,12 @@ def needs_retarget(height):
 
 
 def difficulty_adjustment_interval():
-    return net.POW_TARGET_TIMESPAN_LEGACY // net.POW_TARGET_SPACING
+    return constants.net.POW_TARGET_TIMESPAN_LEGACY // constants.net.POW_TARGET_SPACING
 
 
 def get_header_size(height):
-    return net.HEADER_SIZE if height >= net.BTG_HEIGHT \
-        else net.HEADER_SIZE_LEGACY
+    return constants.net.HEADER_SIZE if height >= constants.net.BTG_HEIGHT \
+        else constants.net.HEADER_SIZE_LEGACY
 
 
 def hex_to_int(s):

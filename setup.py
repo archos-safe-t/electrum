@@ -34,12 +34,12 @@ if platform.system() in ['Linux', 'FreeBSD', 'DragonFly']:
         else:
             usr_share = os.path.expanduser('~/.local/share')
     data_files += [
-        (os.path.join(usr_share, 'applications/'), ['electrum.desktop']),
-        (os.path.join(usr_share, 'pixmaps/'), ['icons/electrum.png'])
+        (os.path.join(usr_share, 'applications/'), ['electrum-gold.desktop']),
+        (os.path.join(usr_share, 'pixmaps/'), ['icons/electrum-gold.png'])
     ]
 
 setup(
-    name="Electrum",
+    name="ElectrumGold",
     version=version.ELECTRUM_VERSION,
     install_requires=requirements,
     packages=[
@@ -69,22 +69,22 @@ setup(
         'electrum': [
             'servers.json',
             'servers_testnet.json',
+            'servers_regtest.json',
             'currencies.json',
             'checkpoints.json',
-            'checkpoints_testnet.json',
             'www/index.html',
             'wordlist/*.txt',
             'locale/*/LC_MESSAGES/electrum.mo',
         ]
     },
-    scripts=['electrum'],
+    scripts=['electrum-gold'],
     data_files=data_files,
-    description="Lightweight Bitcoin Wallet",
-    author="Thomas Voegtlin",
-    author_email="thomasv@electrum.org",
+    description="Lightweight BitcoinGold Wallet",
+    author="The BitcoinGold Developers",
+    author_email="support@bitcoingold.org",
     license="MIT Licence",
-    url="https://electrum.org",
-    long_description="""Lightweight Bitcoin Wallet"""
+    url="https://bitcoingold.org",
+    long_description="""Lightweight BitcoinGold Wallet"""
 )
 
 # Optional modules (not required to run Electrum)

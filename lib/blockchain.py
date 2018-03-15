@@ -147,7 +147,7 @@ class Blockchain(util.PrintError):
     """
 
     def __init__(self, config, checkpoint, parent_id):
-        self.fork_byte_offset = constants.net.BTG_HEIGHT * NetworkConstants.HEADER_SIZE_LEGACY
+        self.fork_byte_offset = constants.net.BTG_HEIGHT * constants.net.HEADER_SIZE_LEGACY
         self.config = config
         # interface catching up
         self.catch_up = None
@@ -227,25 +227,28 @@ class Blockchain(util.PrintError):
 
     def verify_header(self, header, prev_hash, target):
         block_height = header.get('block_height')
-        _hash = hash_header(header, block_height)
 
         if prev_hash != header.get('prev_block_hash'):
             raise BaseException("prev hash mismatch: %s vs %s" % (prev_hash, header.get('prev_block_hash')))
-        if constants.net.TESTNET:
-            return
+        #if constants.net.TESTNET:
+        #    return
         bits = self.target_to_bits(target)
         if bits != header.get('bits'):
             raise BaseException("bits mismatch: %s vs %s" % (bits, header.get('bits')))
+        _hash = hash_header(header, block_height)
         if int('0x' + _hash, 16) > target:
             raise BaseException("insufficient proof of work: %s vs target %s" % (int('0x' + _hash, 16), target))
+        #_powhash = uint256_from_bytes(Hash(bfh(serialize_header(header))))
+        #if _powhash > target:
+        #    raise BaseException("insufficient proof of work: %s vs target %s" % (int('0x' + _powhash, 16), target))
         if is_postfork(block_height):
-            header_bytes = bytes.fromhex(serialize_header(header, False))
+            header_bytes = bytes.fromhex(serialize_header(header))
             nonce = uint256_from_bytes(bfh(header.get('nonce'))[::-1])
             solution = bfh(header.get('solution'))[::-1]
             offset, length = var_int_read(solution, 0)
             solution = solution[offset:]
 
-            if not is_gbp_valid(header_bytes, nonce, solution, NetworkConstants.EQUIHASH_N, NetworkConstants.EQUIHASH_K):
+            if not is_gbp_valid(header_bytes, nonce, solution, constants.net.EQUIHASH_N, constants.net.EQUIHASH_K):
                 raise BaseException("Invalid equihash solution")
 
     def verify_chunk(self, height, data):
