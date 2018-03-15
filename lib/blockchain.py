@@ -22,6 +22,7 @@
 # SOFTWARE.
 import gzip
 import threading
+from time import sleep
 
 from .equihash import is_gbp_valid
 from . import util
@@ -267,6 +268,9 @@ class Blockchain(util.PrintError):
             offset += header_size
             height += 1
 
+            # FIXME(wilson): Check why UI stalls. For now give it some processing time.
+            sleep(0.001)
+
     def path(self):
         d = util.get_headers_dir(self.config)
         filename = 'blockchain_headers' if self.parent_id is None else os.path.join('forks', 'fork_%d_%d'%(self.parent_id, self.checkpoint))
@@ -415,8 +419,7 @@ class Blockchain(util.PrintError):
             return '0000000000000000000000000000000000000000000000000000000000000000'
         elif height == 0:
             return NetworkConstants.GENESIS
-        elif height < len(self.checkpoints) * difficulty_adjustment_interval():
-            assert (height + 1) % difficulty_adjustment_interval() == 0, height
+        elif height < len(self.checkpoints) * difficulty_adjustment_interval() and (height + 1) % difficulty_adjustment_interval() == 0:
             index = height // difficulty_adjustment_interval()
             h, t = self.checkpoints[index]
             return h

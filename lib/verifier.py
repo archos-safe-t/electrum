@@ -44,6 +44,22 @@ class SPV(ThreadJob):
                 header = self.network.blockchain().read_header(tx_height)
                 if header is None and self.network.interface:
                     index = tx_height // NetworkConstants.CHUNK_SIZE
+
+                    '''
+                    Go back until we either have a valid chunk within this difficulty adjustment interval 
+                    or we hit a checkpoint border
+                    
+                    This fixes missing headers for heights in-between difficulty adjustment interval 
+                    in conjunction with checkpoints
+                    
+                    Currently applies to pre-fork blocks only as BTG has no checkpoints                    
+                    '''
+                    while self.network.blockchain().read_header((index - 1) * NetworkConstants.CHUNK_SIZE) is None:
+                        index -= 1
+
+                        if (index * NetworkConstants.CHUNK_SIZE) % difficulty_adjustment_interval() == 0:
+                            break
+
                     self.network.request_chunk(self.network.interface, index)
                 else:
                     if tx_hash not in self.merkle_roots:
