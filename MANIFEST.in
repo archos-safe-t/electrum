@@ -3,7 +3,7 @@ include README.rst
 include electrum-gold.conf.sample
 include electrum-gold.desktop
 include *.py
-include electrum
+include electrum-gold
 include contrib/requirements/requirements.txt
 include contrib/requirements/requirements-hw.txt
 recursive-include lib *.py

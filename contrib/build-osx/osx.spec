@@ -5,8 +5,8 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules, coll
 import sys
 import os
 
-PACKAGE='Electrum Gold'
-PYPKG='electrum-gold'
+PACKAGE=ElectrumGold
+PYPKG='electrum'
 MAIN_SCRIPT='electrum-gold'
 ICONS_FILE='electrum-gold.icns'
 
@@ -32,7 +32,7 @@ datas = [
     (electrum+'lib/servers.json', PYPKG),
     (electrum+'lib/checkpoints.json', PYPKG),
     (electrum+'lib/servers_testnet.json', PYPKG),
-    (electrum+'lib/checkpoints_testnet.json', PYPKG),
+    (electrum+'lib/servers_regtest.json', PYPKG),
     (electrum+'lib/wordlist/english.txt', PYPKG + '/wordlist'),
     (electrum+'lib/locale', PYPKG + '/locale'),
     (electrum+'plugins', PYPKG + '_plugins'),
@@ -85,13 +85,13 @@ exe = EXE(pyz,
           debug=False,
           strip=False,
           upx=True,
-          icon=electrum-gold+ICONS_FILE,
+          icon=electrum+ICONS_FILE,
           console=False)
 
 app = BUNDLE(exe,
              version = VERSION,
              name=PACKAGE + '.app',
-             icon=electrum-gold+ICONS_FILE,
+             icon=electrum+ICONS_FILE,
              bundle_identifier=None,
              info_plist={
                 'NSHighResolutionCapable': 'True',
