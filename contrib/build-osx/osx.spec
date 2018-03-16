@@ -6,7 +6,7 @@ import sys
 import os
 
 PACKAGE=ElectrumGold
-PYPKG='electrum'
+PYPKG='electrum-gold'
 MAIN_SCRIPT='electrum-gold'
 ICONS_FILE='electrum-gold.icns'
 
