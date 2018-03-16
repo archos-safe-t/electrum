@@ -5,7 +5,7 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules, coll
 import sys
 import os
 
-PACKAGE=ElectrumGold
+PACKAGE='ElectrumGold'
 PYPKG='electrum-gold'
 MAIN_SCRIPT='electrum-gold'
 ICONS_FILE='electrum-gold.icns'
