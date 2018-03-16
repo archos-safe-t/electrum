@@ -49,18 +49,18 @@ echo "Last commit: $VERSION"
 find -exec touch -d '2000-11-11T11:11:11+00:00' {} +
 popd
 
-rm -rf $WINEPREFIX/drive_c/electrum
-cp -r electrum $WINEPREFIX/drive_c/electrum
+rm -rf $WINEPREFIX/drive_c/electrum-gold
+cp -r electrum $WINEPREFIX/drive_c/electrum-gold
 cp electrum/LICENCE .
-cp -r electrum-locale/locale $WINEPREFIX/drive_c/electrum/lib/
-cp electrum-icons/icons_rc.py $WINEPREFIX/drive_c/electrum/gui/qt/
+cp -r electrum-locale/locale $WINEPREFIX/drive_c/electrum-gold/lib/
+cp electrum-icons/icons_rc.py $WINEPREFIX/drive_c/electrum-gold/gui/qt/
 
 # Install frozen dependencies
 $PYTHON -m pip install -r ../../deterministic-build/requirements.txt
 
 $PYTHON -m pip install -r ../../deterministic-build/requirements-hw.txt
 
-pushd $WINEPREFIX/drive_c/electrum
+pushd $WINEPREFIX/drive_c/electrum-gold
 $PYTHON setup.py install
 popd
 
@@ -81,7 +81,7 @@ popd
 wine "$WINEPREFIX/drive_c/Program Files (x86)/NSIS/makensis.exe" /DPRODUCT_VERSION=$VERSION electrum.nsi
 
 cd dist
-mv electrum-setup.exe $NAME_ROOT-$VERSION-setup.exe
+mv electrum-gold-setup.exe $NAME_ROOT-$VERSION-setup.exe
 cd ..
 
 echo "Done."

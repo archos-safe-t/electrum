@@ -17,7 +17,7 @@
   ;Name and file
   Name "${PRODUCT_NAME}"
   OutFile "dist/electrum-gold-setup.exe"
-gold
+
   ;Default installation folder
   InstallDir "$PROGRAMFILES\${PRODUCT_NAME}"
 
@@ -72,7 +72,7 @@ gold
   !define MUI_ABORTWARNING
   !define MUI_ABORTWARNING_TEXT "Are you sure you wish to abort the installation of ${PRODUCT_NAME}?"
   
-  !define MUI_ICON "tmp\electrum-gold\icons\electrum-gold.ico"
+  !define MUI_ICON "tmp\electrum\icons\electrum-gold.ico"
   
 ;--------------------------------
 ;Pages
