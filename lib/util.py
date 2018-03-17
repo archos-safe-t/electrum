@@ -40,11 +40,10 @@ def inv_dict(d):
     return {v: k for k, v in d.items()}
 
 
-base_units = {'BTG':8, 'mBTG':5, 'uBTG':2}
-fee_levels = [_('Within 25 blocks'), _('Within 10 blocks'), _('Within 5 blocks'), _('Within 2 blocks'), _('In the next block')]
+base_units = {'BTG': 8, 'mBTG': 5, 'uBTG': 2}
 
 def normalize_version(v):
-    return [int(x) for x in re.sub(r'(\.0+)*$','', v).split(".")]
+    return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split(".")]
 
 class NotEnoughFunds(Exception): pass
 
@@ -58,17 +57,80 @@ class InvalidPassword(Exception):
     def __str__(self):
         return _("Incorrect password")
 
+
+class FileImportFailed(Exception):
+    def __init__(self, message=''):
+        self.message = str(message)
+
+    def __str__(self):
+        return _("Failed to import from file.") + "\n" + self.message
+
+
+class FileExportFailed(Exception):
+    def __init__(self, message=''):
+        self.message = str(message)
+
+    def __str__(self):
+        return _("Failed to export to file.") + "\n" + self.message
+
+
+class TimeoutException(Exception):
+    def __init__(self, message=''):
+        self.message = str(message)
+
+    def __str__(self):
+        if not self.message:
+            return _("Operation timed out.")
+        return self.message
+
+
 # Throw this exception to unwind the stack like when an error occurs.
 # However unlike other exceptions the user won't be informed.
 class UserCancelled(Exception):
     '''An exception that is suppressed from the user'''
     pass
 
+class Satoshis(object):
+    def __new__(cls, value):
+        self = super(Satoshis, cls).__new__(cls)
+        self.value = value
+        return self
+
+    def __repr__(self):
+        return 'Satoshis(%d)'%self.value
+
+    def __str__(self):
+        return format_satoshis(self.value) + " BTG"
+
+class Fiat(object):
+    def __new__(cls, value, ccy):
+        self = super(Fiat, cls).__new__(cls)
+        self.ccy = ccy
+        self.value = value
+        return self
+
+    def __repr__(self):
+        return 'Fiat(%s)'% self.__str__()
+
+    def __str__(self):
+        if self.value.is_nan():
+            return _('No Data')
+        else:
+            return "{:.2f}".format(self.value) + ' ' + self.ccy
+
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):
         from .transaction import Transaction
         if isinstance(obj, Transaction):
             return obj.as_dict()
+        if isinstance(obj, Satoshis):
+            return str(obj)
+        if isinstance(obj, Fiat):
+            return str(obj)
+        if isinstance(obj, Decimal):
+            return str(obj)
+        if isinstance(obj, datetime):
+            return obj.isoformat(' ')[:-3]
         return super(MyEncoder, self).default(obj)
 
 class PrintError(object):
@@ -246,7 +308,7 @@ def android_check_data_dir():
     """ if needed, move old directory to sandbox """
     ext_dir = android_ext_dir()
     data_dir = android_data_dir()
-    old_electrum_dir = ext_dir + '/electrum'
+    old_electrum_dir = ext_dir + '/electrum-gold'
     if not os.path.exists(data_dir) and os.path.exists(old_electrum_dir):
         import shutil
         new_headers_path = android_headers_dir() + '/blockchain_headers'
@@ -370,10 +432,9 @@ def format_satoshis(x, is_diff=False, num_zeros = 0, decimal_point = 8, whitespa
     return result
 
 def timestamp_to_datetime(timestamp):
-    try:
-        return datetime.fromtimestamp(timestamp)
-    except:
+    if timestamp is None:
         return None
+    return datetime.fromtimestamp(timestamp)
 
 def format_time(timestamp):
     date = timestamp_to_datetime(timestamp)
@@ -441,15 +502,16 @@ mainnet_block_explorers = {
                         {'tx': 'tx/', 'addr': 'address/'}),
 }
 
-# TODO: Add testnet block explorer as soon as it is available
 testnet_block_explorers = {
+    'BitcoinGold.org': ('https://test-explorer.bitcoingold.org/',
+                        {'tx': 'tx/', 'addr': 'address/'}),
     'system default': ('blockchain://000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943/',
                        {'tx': 'tx/', 'addr': 'address/'}),
 }
 
 def block_explorer_info():
-    from . import bitcoin
-    return testnet_block_explorers if bitcoin.NetworkConstants.TESTNET else mainnet_block_explorers
+    from . import constants
+    return testnet_block_explorers if constants.net.TESTNET else mainnet_block_explorers
 
 def block_explorer(config):
     return config.get('block_explorer', 'Blocktrail.com')
@@ -718,3 +780,26 @@ def setup_thread_excepthook():
 
 def versiontuple(v):
     return tuple(map(int, (v.split("."))))
+
+
+def import_meta(path, validater, load_meta):
+    try:
+        with open(path, 'r') as f:
+            d = validater(json.loads(f.read()))
+        load_meta(d)
+    #backwards compatibility for JSONDecodeError
+    except ValueError:
+        traceback.print_exc(file=sys.stderr)
+        raise FileImportFailed(_("Invalid JSON code."))
+    except BaseException as e:
+        traceback.print_exc(file=sys.stdout)
+        raise FileImportFailed(e)
+
+
+def export_meta(meta, fileName):
+    try:
+        with open(fileName, 'w+') as f:
+            json.dump(meta, f, indent=4, sort_keys=True)
+    except (IOError, os.error) as e:
+        traceback.print_exc(file=sys.stderr)
+        raise FileExportFailed(e)

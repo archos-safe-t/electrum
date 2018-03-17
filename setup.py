@@ -9,15 +9,18 @@ import platform
 import imp
 import argparse
 
-with open('requirements-hw.txt') as f:
+with open('contrib/requirements/requirements.txt') as f:
+    requirements = f.read().splitlines()
+
+with open('contrib/requirements/requirements-hw.txt') as f:
     requirements_hw = f.read().splitlines()
 
 version = imp.load_source('version', 'lib/version.py')
 
 if sys.version_info[:3] < (3, 4, 0):
-    sys.exit("Error: Electrum requires Python version >= 3.4.0...")
+    sys.exit("Error: Electrum Gold requires Python version >= 3.4.0...")
 
-data_files = ['requirements-hw.txt']
+data_files = []
 
 if platform.system() in ['Linux', 'FreeBSD', 'DragonFly']:
     parser = argparse.ArgumentParser()
@@ -31,28 +34,14 @@ if platform.system() in ['Linux', 'FreeBSD', 'DragonFly']:
         else:
             usr_share = os.path.expanduser('~/.local/share')
     data_files += [
-        (os.path.join(usr_share, 'applications/'), ['electrum.desktop']),
-        (os.path.join(usr_share, 'pixmaps/'), ['icons/electrum.png'])
+        (os.path.join(usr_share, 'applications/'), ['electrum-gold.desktop']),
+        (os.path.join(usr_share, 'pixmaps/'), ['icons/electrum-gold.png'])
     ]
 
 setup(
-    name="Electrum",
+    name="ElectrumGold",
     version=version.ELECTRUM_VERSION,
-    install_requires=[
-        'pyaes>=0.1a1',
-        'ecdsa>=0.9',
-        'pbkdf2',
-        'requests',
-        'qrcode',
-        'protobuf',
-        'dnspython',
-        'jsonrpclib-pelix',
-        'PySocks>=1.6.6',
-        'pyblake2',
-    ],
-    extras_require={
-        'hardware': requirements_hw,
-    },
+    install_requires=requirements,
     packages=[
         'electrum',
         'electrum_gui',
@@ -80,20 +69,25 @@ setup(
         'electrum': [
             'servers.json',
             'servers_testnet.json',
+            'servers_regtest.json',
             'currencies.json',
             'checkpoints.json',
-            'checkpoints_testnet.json',
             'www/index.html',
             'wordlist/*.txt',
             'locale/*/LC_MESSAGES/electrum.mo',
         ]
     },
-    scripts=['electrum'],
+    scripts=['electrum-gold'],
     data_files=data_files,
-    description="Lightweight Bitcoin Wallet",
-    author="Thomas Voegtlin",
-    author_email="thomasv@electrum.org",
+    description="Lightweight BitcoinGold Wallet",
+    author="The BitcoinGold Developers",
+    author_email="support@bitcoingold.org",
     license="MIT Licence",
-    url="https://electrum.org",
-    long_description="""Lightweight Bitcoin Wallet"""
+    url="https://bitcoingold.org",
+    long_description="""Lightweight BitcoinGold Wallet"""
 )
+
+# Optional modules (not required to run Electrum)
+import pip
+opt_modules = requirements_hw + ['pycryptodomex']
+[ pip.main(['install', m]) for m in opt_modules ]

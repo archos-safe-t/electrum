@@ -51,6 +51,8 @@ FINAL_SEED_VERSION = 16     # electrum >= 2.7 will set this to prevent
 def multisig_type(wallet_type):
     '''If wallet_type is mofn multi-sig, return [m, n],
     otherwise return None.'''
+    if not wallet_type:
+        return None
     match = re.match('(\d+)of(\d+)', wallet_type)
     if match:
         match = [int(x) for x in match.group(1, 2)]
@@ -417,7 +419,7 @@ class WalletStorage(PrintError):
                     d['seed'] = seed
                 self.put(key, d)
         else:
-            raise
+            raise Exception('Unable to tell wallet type. Is this even a wallet file?')
         # remove junk
         self.put('master_public_key', None)
         self.put('master_public_keys', None)
@@ -582,7 +584,7 @@ class WalletStorage(PrintError):
         if not seed_version:
             seed_version = OLD_SEED_VERSION if len(self.get('master_public_key','')) == 128 else NEW_SEED_VERSION
         if seed_version > FINAL_SEED_VERSION:
-            raise BaseException('This version of Electrum is too old to open this wallet')
+            raise BaseException('This version of Electrum Gold is too old to open this wallet')
         if seed_version==14 and self.get('seed_type') == 'segwit':
             self.raise_unsupported_version(seed_version)
         if seed_version >=12:
@@ -604,5 +606,5 @@ class WalletStorage(PrintError):
                 msg += "\nIt does not contain any keys, and can safely be removed."
             else:
                 # creation was complete if electrum was run from source
-                msg += "\nPlease open this file with Electrum 1.9.8, and move your coins to a new wallet."
+                msg += "\nPlease open this file with Electrum Gold 1.9.8, and move your coins to a new wallet."
         raise BaseException(msg)

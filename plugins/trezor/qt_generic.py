@@ -17,7 +17,7 @@ PASSPHRASE_HELP_SHORT =_(
     "Passphrases allow you to access new wallets, each "
     "hidden behind a particular case-sensitive passphrase.")
 PASSPHRASE_HELP = PASSPHRASE_HELP_SHORT + "  " + _(
-    "You need to create a separate Electrum wallet for each passphrase "
+    "You need to create a separate Electrum Gold wallet for each passphrase "
     "you use as they each generate different addresses.  Changing "
     "your passphrase does not lose other wallets, each is still "
     "accessible behind its own passphrase.")
@@ -251,7 +251,7 @@ class QtPlugin(QtPluginBase):
             vbox.addWidget(QLabel(msg))
             vbox.addWidget(text)
             pin = QLineEdit()
-            pin.setValidator(QRegExpValidator(QRegExp('[1-9]{0,10}')))
+            pin.setValidator(QRegExpValidator(QRegExp('[1-9]{0,9}')))
             pin.setMaximumWidth(100)
             hbox_pin = QHBoxLayout()
             hbox_pin.addWidget(QLabel(_("Enter your PIN (digits 1-9):")))
@@ -321,8 +321,11 @@ class SettingsDialog(WindowModalDialog):
         def update(features):
             self.features = features
             set_label_enabled()
-            bl_hash = bh2u(features.bootloader_hash)
-            bl_hash = "\n".join([bl_hash[:32], bl_hash[32:]])
+            if features.bootloader_hash:
+                bl_hash = bh2u(features.bootloader_hash)
+                bl_hash = "\n".join([bl_hash[:32], bl_hash[32:]])
+            else:
+                bl_hash = "N/A"
             noyes = [_("No"), _("Yes")]
             endis = [_("Enable Passphrases"), _("Disable Passphrases")]
             disen = [_("Disabled"), _("Enabled")]
@@ -360,13 +363,13 @@ class SettingsDialog(WindowModalDialog):
             currently_enabled = self.features.passphrase_protection
             if currently_enabled:
                 msg = _("After disabling passphrases, you can only pair this "
-                        "Electrum wallet if it had an empty passphrase.  "
+                        "Electrum Gold wallet if it had an empty passphrase.  "
                         "If its passphrase was not empty, you will need to "
                         "create a new wallet with the install wizard.  You "
                         "can use this wallet again at any time by re-enabling "
                         "passphrases and entering its passphrase.")
             else:
-                msg = _("Your current Electrum wallet can only be used with "
+                msg = _("Your current Electrum Gold wallet can only be used with "
                         "an empty passphrase.  You must create a separate "
                         "wallet with the install wizard for other passphrases "
                         "as each one generates a new set of addresses.")

@@ -1,7 +1,17 @@
 {
-        "127.0.0.1": {
+    "test-node1.bitcoingold.org": {
         "pruning": "-",
-        "t": "50001",
+        "s": "50002",
+        "version": "1.2"
+    },
+    "test-node2.bitcoingold.org": {
+        "pruning": "-",
+        "s": "50002",
+        "version": "1.2"
+    },
+    "test-node3.bitcoingold.org": {
+        "pruning": "-",
+        "s": "50002",
         "version": "1.2"
     }
 }

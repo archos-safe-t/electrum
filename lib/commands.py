@@ -138,6 +138,8 @@ class Commands:
     @command('wp')
     def password(self, password=None, new_password=None):
         """Change wallet password. """
+        if self.wallet.storage.is_encrypted_with_hw_device() and new_password:
+            raise Exception("Can't change the password of a wallet encrypted with a hw device.")
         b = self.wallet.storage.is_encrypted()
         self.wallet.update_password(password, new_password, b)
         self.wallet.storage.write()
@@ -157,18 +159,12 @@ class Commands:
         return True
 
     @command('')
-    def make_seed(self, nbits=132, entropy=1, language=None, segwit=False):
+    def make_seed(self, nbits=132, language=None, segwit=False):
         """Create a seed"""
         from .mnemonic import Mnemonic
         t = 'segwit' if segwit else 'standard'
-        s = Mnemonic(language).make_seed(t, nbits, custom_entropy=entropy)
+        s = Mnemonic(language).make_seed(t, nbits)
         return s
-
-    @command('')
-    def check_seed(self, seed, entropy=1, language=None):
-        """Check that a seed was generated with given entropy"""
-        from .mnemonic import Mnemonic
-        return Mnemonic(language).check_seed(seed, entropy)
 
     @command('n')
     def getaddresshistory(self, address):
@@ -449,7 +445,11 @@ class Commands:
             end_date = datetime.datetime(year+1, 1, 1)
             kwargs['from_timestamp'] = time.mktime(start_date.timetuple())
             kwargs['to_timestamp'] = time.mktime(end_date.timetuple())
-        return self.wallet.export_history(**kwargs)
+        if show_fiat:
+            from .exchange_rate import FxThread
+            fx = FxThread(self.config, None)
+            kwargs['fx'] = fx
+        return self.wallet.get_full_history(**kwargs)
 
     @command('w')
     def setlabel(self, key, label):
@@ -691,7 +691,6 @@ command_options = {
     'from_addr':   ("-F", "Source address (must be a wallet address; use sweep to spend from non-wallet address)."),
     'change_addr': ("-c", "Change address. Default is a spare address, or the source address if it's not in the wallet"),
     'nbits':       (None, "Number of bits of entropy"),
-    'entropy':     (None, "Custom entropy"),
     'segwit':      (None, "Create segwit seed"),
     'language':    ("-L", "Default language for wordlist"),
     'privkey':     (None, "Private key. Set to '?' to get a prompt."),
@@ -720,7 +719,6 @@ arg_types = {
     'nbits': int,
     'imax': int,
     'year': int,
-    'entropy': int,
     'tx': tx_from_str,
     'pubkeys': json_loads,
     'jsontx': json_loads,
@@ -804,7 +802,7 @@ def add_network_options(parser):
 def add_global_options(parser):
     group = parser.add_argument_group('global options')
     group.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False, help="Show debugging information")
-    group.add_argument("-D", "--dir", dest="electrum_path", help="electrum directory")
+    group.add_argument("-D", "--dir", dest="electrum-gold_path", help="electrum directory")
     group.add_argument("-P", "--portable", action="store_true", dest="portable", default=False, help="Use local 'electrum_data' directory")
     group.add_argument("-w", "--wallet", dest="wallet_path", help="wallet path")
     group.add_argument("--testnet", action="store_true", dest="testnet", default=False, help="Use Testnet")

@@ -26,6 +26,7 @@ from time import sleep
 
 from .equihash import is_gbp_valid
 from . import util
+from . import constants
 from .bitcoin import *
 
 blockchains = {}
@@ -146,12 +147,12 @@ class Blockchain(util.PrintError):
     """
 
     def __init__(self, config, checkpoint, parent_id):
-        self.fork_byte_offset = NetworkConstants.BTG_HEIGHT * NetworkConstants.HEADER_SIZE_LEGACY
+        self.fork_byte_offset = constants.net.BTG_HEIGHT * constants.net.HEADER_SIZE_LEGACY
         self.config = config
         # interface catching up
         self.catch_up = None
         self.checkpoint = checkpoint
-        self.checkpoints = NetworkConstants.CHECKPOINTS
+        self.checkpoints = constants.net.CHECKPOINTS
         self.parent_id = parent_id
         self.lock = threading.Lock()
         self._size = 0
@@ -209,40 +210,45 @@ class Blockchain(util.PrintError):
             size = read_file(p, get_offset, self.lock)
 
             if is_postfork(self.checkpoint):
-                self._size = size // NetworkConstants.HEADER_SIZE
+                self._size = size // constants.net.HEADER_SIZE
             else:
-                checkpoint_size = self.checkpoint * NetworkConstants.HEADER_SIZE_LEGACY
+                checkpoint_size = self.checkpoint * constants.net.HEADER_SIZE_LEGACY
                 full_size = (size + checkpoint_size)
 
                 # Check fork boundary crossing
                 if full_size <= self.fork_byte_offset:
-                    self._size = size // NetworkConstants.HEADER_SIZE_LEGACY
+                    self._size = size // constants.net.HEADER_SIZE_LEGACY
                 else:
-                    prb = (self.fork_byte_offset - checkpoint_size) // NetworkConstants.HEADER_SIZE_LEGACY
-                    pob = (full_size - self.fork_byte_offset) // NetworkConstants.HEADER_SIZE
+                    prb = (self.fork_byte_offset - checkpoint_size) // constants.net.HEADER_SIZE_LEGACY
+                    pob = (full_size - self.fork_byte_offset) // constants.net.HEADER_SIZE
                     self._size = prb + pob
         else:
             self._size = 0
 
     def verify_header(self, header, prev_hash, target):
         block_height = header.get('block_height')
-        _hash = hash_header(header, block_height)
 
         if prev_hash != header.get('prev_block_hash'):
             raise BaseException("prev hash mismatch: %s vs %s" % (prev_hash, header.get('prev_block_hash')))
+        #if constants.net.TESTNET:
+        #    return
         bits = self.target_to_bits(target)
         if bits != header.get('bits'):
-            raise BaseException("bits mismatch: %s vs %s" % (bits, header.get('bits'),))
+            raise BaseException("bits mismatch: %s vs %s" % (bits, header.get('bits')))
+        _hash = hash_header(header, block_height)
         if int('0x' + _hash, 16) > target:
             raise BaseException("insufficient proof of work: %s vs target %s" % (int('0x' + _hash, 16), target))
+        #_powhash = uint256_from_bytes(Hash(bfh(serialize_header(header))))
+        #if _powhash > target:
+        #    raise BaseException("insufficient proof of work: %s vs target %s" % (int('0x' + _powhash, 16), target))
         if is_postfork(block_height):
-            header_bytes = bytes.fromhex(serialize_header(header, False))
+            header_bytes = bytes.fromhex(serialize_header(header))
             nonce = uint256_from_bytes(bfh(header.get('nonce'))[::-1])
             solution = bfh(header.get('solution'))[::-1]
             offset, length = var_int_read(solution, 0)
             solution = solution[offset:]
 
-            if not is_gbp_valid(header_bytes, nonce, solution, NetworkConstants.EQUIHASH_N, NetworkConstants.EQUIHASH_K):
+            if not is_gbp_valid(header_bytes, nonce, solution, constants.net.EQUIHASH_N, constants.net.EQUIHASH_K):
                 raise BaseException("Invalid equihash solution")
 
     def verify_chunk(self, height, data):
@@ -313,13 +319,13 @@ class Blockchain(util.PrintError):
         size = 0
 
         if not is_postfork(parent.checkpoint) and is_postfork(checkpoint):
-            prb = (NetworkConstants.BTG_HEIGHT - parent.checkpoint)
-            pob = checkpoint - NetworkConstants.BTG_HEIGHT
-            offset = (prb * NetworkConstants.HEADER_SIZE_LEGACY) + (pob * NetworkConstants.HEADER_SIZE)
-            size = parent_branch_size * NetworkConstants.HEADER_SIZE
+            prb = (constants.net.BTG_HEIGHT - parent.checkpoint)
+            pob = checkpoint - constants.net.BTG_HEIGHT
+            offset = (prb * constants.net.HEADER_SIZE_LEGACY) + (pob * constants.net.HEADER_SIZE)
+            size = parent_branch_size * constants.net.HEADER_SIZE
         else:
             offset = delta * get_header_size(parent.checkpoint)
-            size = parent_branch_size * NetworkConstants.HEADER_SIZE
+            size = parent_branch_size * constants.net.HEADER_SIZE
 
         def parent_data_read(f):
             f.seek(offset)
@@ -411,14 +417,14 @@ class Blockchain(util.PrintError):
     def get_header(self, height, headers=None):
         if headers is None:
             headers = {}
-        
+
         return headers[height] if height in headers else self.read_header(height)
-        
+
     def get_hash(self, height):
         if height == -1:
             return '0000000000000000000000000000000000000000000000000000000000000000'
         elif height == 0:
-            return NetworkConstants.GENESIS
+            return constants.net.GENESIS
         elif height < len(self.checkpoints) * difficulty_adjustment_interval() and (height + 1) % difficulty_adjustment_interval() == 0:
             index = height // difficulty_adjustment_interval()
             h, t = self.checkpoints[index]
@@ -432,22 +438,22 @@ class Blockchain(util.PrintError):
 
         # Check for genesis
         if height == 0:
-            new_target = NetworkConstants.POW_LIMIT_LEGACY
+            new_target = constants.net.POW_LIMIT_LEGACY
         # Check for valid checkpoint
         elif height % difficulty_adjustment_interval() == 0 and 0 <= ((height // difficulty_adjustment_interval()) - 1) < len(self.checkpoints):
             h, t = self.checkpoints[((height // difficulty_adjustment_interval()) - 1)]
             new_target = t
         # Check for prefork
-        elif height < NetworkConstants.BTG_HEIGHT:
+        elif height < constants.net.BTG_HEIGHT:
             new_target = self.get_legacy_target(height, headers)
         # Premine
-        elif height < NetworkConstants.BTG_HEIGHT + NetworkConstants.PREMINE_SIZE:
-            new_target = NetworkConstants.POW_LIMIT
+        elif height < constants.net.BTG_HEIGHT + constants.net.PREMINE_SIZE:
+            new_target = constants.net.POW_LIMIT
         # Initial start (reduced difficulty)
-        elif height < NetworkConstants.BTG_HEIGHT + NetworkConstants.PREMINE_SIZE + NetworkConstants.DIGI_AVERAGING_WINDOW:
-            new_target = NetworkConstants.POW_LIMIT_START
+        elif height < constants.net.BTG_HEIGHT + constants.net.PREMINE_SIZE + constants.net.DIGI_AVERAGING_WINDOW:
+            new_target = constants.net.POW_LIMIT_START
         # Digishield
-        elif height < NetworkConstants.LWMA_HEIGHT:
+        elif height < constants.net.LWMA_HEIGHT:
             new_target = self.get_digishield_target(height, headers)
         # Zawy LWMA
         else:
@@ -459,22 +465,22 @@ class Blockchain(util.PrintError):
         last_height = (height - 1)
         last = self.get_header(last_height, headers)
 
-        if NetworkConstants.REGTEST:
+        if constants.net.REGTEST:
             new_target = self.bits_to_target(last.get('bits'))
         elif height % difficulty_adjustment_interval() != 0:
-            if NetworkConstants.TESTNET:
+            if constants.net.TESTNET:
                 cur = self.get_header(height, headers)
 
                 # Special testnet handling
-                if cur.get('timestamp') > last.get('timestamp') + NetworkConstants.POW_TARGET_SPACING * 2:
-                    new_target = NetworkConstants.POW_LIMIT_LEGACY
+                if cur.get('timestamp') > last.get('timestamp') + constants.net.POW_TARGET_SPACING * 2:
+                    new_target = constants.net.POW_LIMIT_LEGACY
                 else:
                     # Return the last non-special-min-difficulty-rules-block
                     prev_height = last_height - 1
                     prev = self.get_header(prev_height, headers)
 
                     while prev is not None and last.get('block_height') % difficulty_adjustment_interval() != 0 \
-                            and last.get('bits') == NetworkConstants.POW_LIMIT:
+                            and last.get('bits') == constants.net.POW_LIMIT:
                         last = prev
                         prev_height -= 1
                         prev = self.get_header(prev_height, headers)
@@ -491,7 +497,7 @@ class Blockchain(util.PrintError):
             actual_timespan = max(actual_timespan, target_timespan // 4)
             actual_timespan = min(actual_timespan, target_timespan * 4)
 
-            new_target = min(NetworkConstants.POW_LIMIT_LEGACY, (target * actual_timespan) // target_timespan)
+            new_target = min(constants.net.POW_LIMIT_LEGACY, (target * actual_timespan) // target_timespan)
 
         return new_target
 
@@ -501,20 +507,20 @@ class Blockchain(util.PrintError):
         last = self.get_header(last_height, headers)
 
         # Special testnet handling
-        if NetworkConstants.REGTEST:
+        if constants.net.REGTEST:
             new_target = self.get_target(height - 1)
-        elif NetworkConstants.TESTNET and cur.get('timestamp') > last.get('timestamp') + NetworkConstants.POW_TARGET_SPACING * 2:
-            new_target = NetworkConstants.POW_LIMIT
+        elif constants.net.TESTNET and cur.get('timestamp') > last.get('timestamp') + constants.net.POW_TARGET_SPACING * 2:
+            new_target = constants.net.POW_LIMIT
         else:
             total = 0
             t = 0
             j = 0
 
-            assert (height - NetworkConstants.LWMA_AVERAGING_WINDOW) > 0
-                
+            assert (height - constants.net.LWMA_AVERAGING_WINDOW) > 0
+
             # Loop through N most recent blocks.  "< height", not "<=".
             # height-1 = most recently solved block
-            for i in range(height - NetworkConstants.LWMA_AVERAGING_WINDOW, height):
+            for i in range(height - constants.net.LWMA_AVERAGING_WINDOW, height):
                 cur = self.get_header(i, headers)
                 prev_height = (i - 1)
                 prev = self.get_header(prev_height, headers)
@@ -523,34 +529,34 @@ class Blockchain(util.PrintError):
 
                 j += 1
                 t += solvetime * j
-                total += self.bits_to_target(cur.get('bits')) // (NetworkConstants.LWMA_ADJUST_WEIGHT * NetworkConstants.LWMA_AVERAGING_WINDOW * NetworkConstants.LWMA_AVERAGING_WINDOW)
+                total += self.bits_to_target(cur.get('bits')) // (constants.net.LWMA_ADJUST_WEIGHT * constants.net.LWMA_AVERAGING_WINDOW * constants.net.LWMA_AVERAGING_WINDOW)
 
             # Keep t reasonable in case strange solvetimes occurred.
-            if t < NetworkConstants.LWMA_AVERAGING_WINDOW * NetworkConstants.LWMA_ADJUST_WEIGHT // 3:
-                t = NetworkConstants.LWMA_AVERAGING_WINDOW * NetworkConstants.LWMA_ADJUST_WEIGHT // 3
+            if t < constants.net.LWMA_AVERAGING_WINDOW * constants.net.LWMA_ADJUST_WEIGHT // 3:
+                t = constants.net.LWMA_AVERAGING_WINDOW * constants.net.LWMA_ADJUST_WEIGHT // 3
 
             new_target = t * total
 
-            if new_target > NetworkConstants.POW_LIMIT:
-                new_target = NetworkConstants.POW_LIMIT
+            if new_target > constants.net.POW_LIMIT:
+                new_target = constants.net.POW_LIMIT
 
         return new_target
 
     def get_digishield_target(self, height, headers):
-        pow_limit = NetworkConstants.POW_LIMIT
+        pow_limit = constants.net.POW_LIMIT
         height -= 1
         last = self.get_header(height, headers)
 
         if last is None:
             new_target = pow_limit
-        elif NetworkConstants.REGTEST:
+        elif constants.net.REGTEST:
             new_target = self.bits_to_target(last.get('bits'))
         else:
             first = last
             total = 0
             i = 0
 
-            while i < NetworkConstants.DIGI_AVERAGING_WINDOW and first is not None:
+            while i < constants.net.DIGI_AVERAGING_WINDOW and first is not None:
                 total += self.bits_to_target(first.get('bits'))
                 prev_height = height - i - 1
                 first = self.get_header(prev_height, headers)
@@ -559,7 +565,7 @@ class Blockchain(util.PrintError):
             # This should never happen else we have a serious problem
             assert first is not None
 
-            avg = total // NetworkConstants.DIGI_AVERAGING_WINDOW
+            avg = total // constants.net.DIGI_AVERAGING_WINDOW
             actual_timespan = self.get_mediantime_past(headers, last.get('block_height')) \
                 - self.get_mediantime_past(headers, first.get('block_height'))
 
@@ -628,7 +634,7 @@ class Blockchain(util.PrintError):
             self.print_error("cannot connect at height", height)
             return False
         if height == 0:
-            return hash_header(header, height) == NetworkConstants.GENESIS
+            return hash_header(header, height) == constants.net.GENESIS
         try:
             prev_hash = self.get_hash(height - 1)
         except:
@@ -645,12 +651,12 @@ class Blockchain(util.PrintError):
     def connect_chunk(self, idx, hexdata):
         try:
             data = bfh(hexdata)
-            self.verify_chunk(idx * NetworkConstants.CHUNK_SIZE, data)
+            self.verify_chunk(idx * constants.net.CHUNK_SIZE, data)
             self.print_error("validated chunk %d" % idx)
-            self.save_chunk(idx * NetworkConstants.CHUNK_SIZE, data)
+            self.save_chunk(idx * constants.net.CHUNK_SIZE, data)
             return True
         except BaseException as e:
-            self.print_error('verify_chunk failed', str(e))
+            self.print_error('verify_chunk %d failed'%idx, str(e))
             return False
 
     def get_offset(self, height):
@@ -658,8 +664,8 @@ class Blockchain(util.PrintError):
         header_size = get_header_size(height)
 
         if is_postfork(height) and not is_postfork(self.checkpoint):
-            pr = (NetworkConstants.BTG_HEIGHT - self.checkpoint) * NetworkConstants.HEADER_SIZE_LEGACY
-            po = (height - NetworkConstants.BTG_HEIGHT) * NetworkConstants.HEADER_SIZE
+            pr = (constants.net.BTG_HEIGHT - self.checkpoint) * constants.net.HEADER_SIZE_LEGACY
+            po = (height - constants.net.BTG_HEIGHT) * constants.net.HEADER_SIZE
             offset = pr + po
         else:
             offset = abs(delta) * header_size
