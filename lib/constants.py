@@ -64,21 +64,6 @@ class BitcoinGoldBase(object):
 
     CHUNK_SIZE = 252
 
-    XPRV_HEADERS = {
-        'standard': 0x0488ade4,
-        'p2wpkh-p2sh': 0x049d7878,
-        'p2wsh-p2sh': 0x295b005,
-        'p2wpkh': 0x4b2430c,
-        'p2wsh': 0x2aa7a99
-    }
-    XPUB_HEADERS = {
-        'standard': 0x0488b21e,
-        'p2wpkh-p2sh': 0x049d7cb2,
-        'p2wsh-p2sh': 0x295b43f,
-        'p2wpkh': 0x4b24746,
-        'p2wsh': 0x2aa7ed3
-    }
-
 
 class BitcoinGoldMainnet(BitcoinGoldBase):
     WIF_PREFIX = 0x80
@@ -99,6 +84,22 @@ class BitcoinGoldMainnet(BitcoinGoldBase):
     POW_LIMIT = 0x0007ffffffff0000000000000000000000000000000000000000000000000000
     POW_LIMIT_START = 0x0000000fffff0000000000000000000000000000000000000000000000000000
     POW_LIMIT_LEGACY = 0x00000000ffff0000000000000000000000000000000000000000000000000000
+
+    XPRV_HEADERS = {
+        'standard': 0x0488ade4,     # xprv
+        'p2wpkh-p2sh': 0x049d7878,  # yprv
+        'p2wsh-p2sh': 0x0295b005,   # Yprv
+        'p2wpkh': 0x04b2430c,       # zprv
+        'p2wsh': 0x02aa7a99,        # Zprv
+    }
+
+    XPUB_HEADERS = {
+        'standard': 0x0488b21e,     # xpub
+        'p2wpkh-p2sh': 0x049d7cb2,  # ypub
+        'p2wsh-p2sh': 0x0295b43f,   # Ypub
+        'p2wpkh': 0x04b24746,       # zpub
+        'p2wsh': 0x02aa7ed3,        # Zpub
+    }
 
 
 class BitcoinGoldTestnet(BitcoinGoldBase):
@@ -122,6 +123,22 @@ class BitcoinGoldTestnet(BitcoinGoldBase):
     POW_LIMIT = 0x0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
     POW_LIMIT_START = 0x0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
     POW_LIMIT_LEGACY = 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+    XPRV_HEADERS = {
+        'standard': 0x04358394,     # tprv
+        'p2wpkh-p2sh': 0x044a4e28,  # uprv
+        'p2wsh-p2sh': 0x024285b5,   # Uprv
+        'p2wpkh': 0x045f18bc,       # vprv
+        'p2wsh': 0x02575048,        # Vprv
+    }
+
+    XPUB_HEADERS = {
+        'standard': 0x043587cf,     # tpub
+        'p2wpkh-p2sh': 0x044a5262,  # upub
+        'p2wsh-p2sh': 0x024285ef,   # Upub
+        'p2wpkh': 0x045f1cf6,       # vpub
+        'p2wsh': 0x02575483,        # Vpub
+    }
 
 
 class BitcoinGoldRegtest(BitcoinGoldBase):
@@ -149,6 +166,22 @@ class BitcoinGoldRegtest(BitcoinGoldBase):
     POW_LIMIT = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
     POW_LIMIT_START = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
     POW_LIMIT_LEGACY = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+    XPRV_HEADERS = {
+        'standard': 0x04358394,     # tprv
+        'p2wpkh-p2sh': 0x044a4e28,  # uprv
+        'p2wsh-p2sh': 0x024285b5,   # Uprv
+        'p2wpkh': 0x045f18bc,       # vprv
+        'p2wsh': 0x02575048,        # Vprv
+    }
+
+    XPUB_HEADERS = {
+        'standard': 0x043587cf,     # tpub
+        'p2wpkh-p2sh': 0x044a5262,  # upub
+        'p2wsh-p2sh': 0x024285ef,   # Upub
+        'p2wpkh': 0x045f1cf6,       # vpub
+        'p2wsh': 0x02575483,        # Vpub
+    }
 
 
 # don't import net directly, import the module instead (so that net is singleton)
