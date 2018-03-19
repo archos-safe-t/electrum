@@ -172,7 +172,7 @@ class SendScreen(CScreen):
         try:
             uri = electrum.util.parse_URI(text, self.app.on_pr)
         except:
-            self.app.show_info(_("Not a Bitcoin URI"))
+            self.app.show_info(_("Not a BitcoinGold URI"))
             return
         amount = uri.get('amount')
         self.screen.address = uri.get('address', '')

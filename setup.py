@@ -18,7 +18,7 @@ with open('contrib/requirements/requirements-hw.txt') as f:
 version = imp.load_source('version', 'lib/version.py')
 
 if sys.version_info[:3] < (3, 4, 0):
-    sys.exit("Error: Electrum Gold requires Python version >= 3.4.0...")
+    sys.exit("Error: ElectrumG requires Python version >= 3.4.0...")
 
 data_files = []
 
@@ -34,12 +34,12 @@ if platform.system() in ['Linux', 'FreeBSD', 'DragonFly']:
         else:
             usr_share = os.path.expanduser('~/.local/share')
     data_files += [
-        (os.path.join(usr_share, 'applications/'), ['electrum-gold.desktop']),
-        (os.path.join(usr_share, 'pixmaps/'), ['icons/electrum-gold.png'])
+        (os.path.join(usr_share, 'applications/'), ['electrumg.desktop']),
+        (os.path.join(usr_share, 'pixmaps/'), ['icons/electrumg.png'])
     ]
 
 setup(
-    name="ElectrumGold",
+    name="ElectrumG",
     version=version.ELECTRUM_VERSION,
     install_requires=requirements,
     packages=[
@@ -77,7 +77,7 @@ setup(
             'locale/*/LC_MESSAGES/electrum.mo',
         ]
     },
-    scripts=['electrum-gold'],
+    scripts=['electrumg'],
     data_files=data_files,
     description="Lightweight BitcoinGold Wallet",
     author="The BitcoinGold Developers",

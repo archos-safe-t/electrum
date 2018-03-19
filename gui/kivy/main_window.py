@@ -307,7 +307,7 @@ class ElectrumWindow(App):
         if is_address(data):
             self.set_URI(data)
             return
-        if data.startswith('bitcoin:'):
+        if data.startswith('bitcoingold:'):
             self.set_URI(data)
             return
         # try to decode transaction
@@ -452,7 +452,7 @@ class ElectrumWindow(App):
         self.fiat_unit = self.fx.ccy if self.fx.is_enabled() else ''
         # default tab
         self.switch_to('history')
-        # bind intent for bitcoin: URI scheme
+        # bind intent for bitcoingold: URI scheme
         if platform == 'android':
             from android import activity
             from jnius import autoclass
@@ -589,7 +589,7 @@ class ElectrumWindow(App):
         self.receive_screen = None
         self.requests_screen = None
         self.address_screen = None
-        self.icon = "icons/electrum-gold.png"
+        self.icon = "icons/electrumg.png"
         self.tabs = self.root.ids['tabs']
 
     def update_interfaces(self, dt):

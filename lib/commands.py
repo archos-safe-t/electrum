@@ -735,10 +735,10 @@ config_variables = {
         'requests_dir': 'directory where a bip70 file will be written.',
         'ssl_privkey': 'Path to your SSL private key, needed to sign the request.',
         'ssl_chain': 'Chain of SSL certificates, needed for signed requests. Put your certificate at the top and the root CA at the end',
-        'url_rewrite': 'Parameters passed to str.replace(), in order to create the r= part of bitcoin: URIs. Example: \"(\'file:///var/www/\',\'https://electrum.org/\')\"',
+        'url_rewrite': 'Parameters passed to str.replace(), in order to create the r= part of bitcoingold: URIs. Example: \"(\'file:///var/www/\',\'https://electrum.org/\')\"',
     },
     'listrequests':{
-        'url_rewrite': 'Parameters passed to str.replace(), in order to create the r= part of bitcoin: URIs. Example: \"(\'file:///var/www/\',\'https://electrum.org/\')\"',
+        'url_rewrite': 'Parameters passed to str.replace(), in order to create the r= part of bitcoingold: URIs. Example: \"(\'file:///var/www/\',\'https://electrum.org/\')\"',
     }
 }
 
@@ -802,7 +802,7 @@ def add_network_options(parser):
 def add_global_options(parser):
     group = parser.add_argument_group('global options')
     group.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False, help="Show debugging information")
-    group.add_argument("-D", "--dir", dest="electrum-gold_path", help="electrum directory")
+    group.add_argument("-D", "--dir", dest="electrumg_path", help="electrum directory")
     group.add_argument("-P", "--portable", action="store_true", dest="portable", default=False, help="Use local 'electrum_data' directory")
     group.add_argument("-w", "--wallet", dest="wallet_path", help="wallet path")
     group.add_argument("--testnet", action="store_true", dest="testnet", default=False, help="Use Testnet")

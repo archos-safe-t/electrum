@@ -17,16 +17,16 @@ PASSPHRASE_HELP_SHORT =_(
     "Passphrases allow you to access new wallets, each "
     "hidden behind a particular case-sensitive passphrase.")
 PASSPHRASE_HELP = PASSPHRASE_HELP_SHORT + "  " + _(
-    "You need to create a separate Electrum Gold wallet for each passphrase "
+    "You need to create a separate ElectrumG wallet for each passphrase "
     "you use as they each generate different addresses.  Changing "
     "your passphrase does not lose other wallets, each is still "
     "accessible behind its own passphrase.")
 RECOMMEND_PIN = _(
     "You should enable PIN protection.  Your PIN is the only protection "
-    "for your bitcoins if your device is lost or stolen.")
+    "for your BitcoinGold if your device is lost or stolen.")
 PASSPHRASE_NOT_PIN = _(
     "If you forget a passphrase you will be unable to access any "
-    "bitcoins in the wallet behind it.  A passphrase is not a PIN. "
+    "BitcoinGold in the wallet behind it.  A passphrase is not a PIN. "
     "Only change this if you are sure you understand it.")
 CHARACTER_RECOVERY = (
     "Use the recovery cipher shown on your device to input your seed words.  "
@@ -50,7 +50,7 @@ class CharacterDialog(WindowModalDialog):
 
     def __init__(self, parent):
         super(CharacterDialog, self).__init__(parent)
-        self.setWindowTitle(_("KeepKey Seed Recovery"))
+        self.setWindowTitle(_("Trezor Seed Recovery"))
         self.character_pos = 0
         self.word_pos = 0
         self.loop = QEventLoop()
@@ -363,13 +363,13 @@ class SettingsDialog(WindowModalDialog):
             currently_enabled = self.features.passphrase_protection
             if currently_enabled:
                 msg = _("After disabling passphrases, you can only pair this "
-                        "Electrum Gold wallet if it had an empty passphrase.  "
+                        "ElectrumG wallet if it had an empty passphrase.  "
                         "If its passphrase was not empty, you will need to "
                         "create a new wallet with the install wizard.  You "
                         "can use this wallet again at any time by re-enabling "
                         "passphrases and entering its passphrase.")
             else:
-                msg = _("Your current Electrum Gold wallet can only be used with "
+                msg = _("Your current ElectrumG wallet can only be used with "
                         "an empty passphrase.  You must create a separate "
                         "wallet with the install wizard for other passphrases "
                         "as each one generates a new set of addresses.")
@@ -416,7 +416,7 @@ class SettingsDialog(WindowModalDialog):
             if wallet and sum(wallet.get_balance()):
                 title = _("Confirm Device Wipe")
                 msg = _("Are you SURE you want to wipe the device?\n"
-                        "Your wallet still has bitcoins in it!")
+                        "Your wallet still has BitcoinGold in it!")
                 if not self.question(msg, title=title,
                                      icon=QMessageBox.Critical):
                     return
@@ -491,7 +491,7 @@ class SettingsDialog(WindowModalDialog):
         settings_glayout.addWidget(pin_button, 2, 1)
         pin_msg = QLabel(_("PIN protection is strongly recommended.  "
                            "A PIN is your only protection against someone "
-                           "stealing your bitcoins if they obtain physical "
+                           "stealing your BitcoinGold if they obtain physical "
                            "access to your {}.").format(plugin.device))
         pin_msg.setWordWrap(True)
         pin_msg.setStyleSheet("color: red")

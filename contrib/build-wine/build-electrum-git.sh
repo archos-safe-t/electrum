@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NAME_ROOT=electrum-gold
+NAME_ROOT=electrumg
 PYTHON_VERSION=3.5.4
 
 # These settings probably don't need any change
@@ -49,18 +49,18 @@ echo "Last commit: $VERSION"
 find -exec touch -d '2000-11-11T11:11:11+00:00' {} +
 popd
 
-rm -rf $WINEPREFIX/drive_c/electrum-gold
-cp -r electrum $WINEPREFIX/drive_c/electrum-gold
+rm -rf $WINEPREFIX/drive_c/electrumg
+cp -r electrum $WINEPREFIX/drive_c/electrumg
 cp electrum/LICENCE .
-cp -r electrum-locale/locale $WINEPREFIX/drive_c/electrum-gold/lib/
-cp electrum-icons/icons_rc.py $WINEPREFIX/drive_c/electrum-gold/gui/qt/
+cp -r electrum-locale/locale $WINEPREFIX/drive_c/electrumg/lib/
+cp electrum-icons/icons_rc.py $WINEPREFIX/drive_c/electrumg/gui/qt/
 
 # Install frozen dependencies
 $PYTHON -m pip install -r ../../deterministic-build/requirements.txt
 
 $PYTHON -m pip install -r ../../deterministic-build/requirements-hw.txt
 
-pushd $WINEPREFIX/drive_c/electrum-gold
+pushd $WINEPREFIX/drive_c/electrumg
 $PYTHON setup.py install
 popd
 
@@ -81,7 +81,7 @@ popd
 wine "$WINEPREFIX/drive_c/Program Files (x86)/NSIS/makensis.exe" /DPRODUCT_VERSION=$VERSION electrum.nsi
 
 cd dist
-mv electrum-gold-setup.exe $NAME_ROOT-$VERSION-setup.exe
+mv electrumg-setup.exe $NAME_ROOT-$VERSION-setup.exe
 cd ..
 
 echo "Done."
