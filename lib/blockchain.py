@@ -404,11 +404,17 @@ class Blockchain(util.PrintError):
 
         name = self.path()
 
-        def get_header(f):
-            f.seek(offset)
-            return f.read(header_size)
+        if os.path.exists(name):
+            def get_header(f):
+                f.seek(offset)
+                return f.read(header_size)
 
-        h = read_file(name, get_header, self.lock)
+            h = read_file(name, get_header, self.lock)
+        elif not os.path.exists(util.get_headers_dir(self.config)):
+            raise Exception('ElectrumG datadir does not exist. Was it deleted while running?')
+        else:
+            raise Exception('Cannot find headers file but datadir is there. Should be at {}'.format(name))
+
 
         if len(h) != header_size or h == bytes([0])*header_size:
             return None
