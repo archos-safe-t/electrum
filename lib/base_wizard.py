@@ -53,6 +53,7 @@ class BaseWizard(object):
         self.keystores = []
         self.is_kivy = config.get('gui') == 'kivy'
         self.seed_type = None
+        self.hw_wallet_enabled = False
 
     def run(self, *args):
         action = args[0]
@@ -133,7 +134,7 @@ class BaseWizard(object):
                 ('restore_from_seed', _('I already have a seed')),
                 ('restore_from_key', _('Use a master key')),
             ]
-            if not self.is_kivy:
+            if self.hw_wallet_enabled and not self.is_kivy:
                 choices.append(('choose_hw_device',  _('Use a hardware device')))
         else:
             message = _('Add a cosigner to your multi-sig wallet')
@@ -141,7 +142,7 @@ class BaseWizard(object):
                 ('restore_from_key', _('Enter cosigner key')),
                 ('restore_from_seed', _('Enter cosigner seed')),
             ]
-            if not self.is_kivy:
+            if self.hw_wallet_enabled and not self.is_kivy:
                 choices.append(('choose_hw_device',  _('Cosign with hardware device')))
 
         self.choice_dialog(title=title, message=message, choices=choices, run_next=self.run)
@@ -481,7 +482,7 @@ class BaseWizard(object):
             _("The type of addresses used by your wallet will depend on your seed."),
             _("Segwit wallets use bech32 addresses, defined in BIP173."),
             _("Please note that websites and other wallets may not support these addresses yet."),
-            _("Thus, you might want to keep using a non-segwit wallet in order to be able to receive bitcoins during the transition period.")
+            _("Thus, you might want to keep using a non-segwit wallet in order to be able to receive BitcoinGold during the transition period.")
         ])
         choices = [
             ('create_standard_seed', _('Standard')),

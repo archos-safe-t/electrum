@@ -130,8 +130,8 @@ class Commands:
     @command('wn')
     def restore(self, text):
         """Restore a wallet from text. Text can be a seed phrase, a master
-        public key, a master private key, a list of bitcoin addresses
-        or bitcoin private keys. If you want to be prompted for your
+        public key, a master private key, a list of BitcoinGold addresses
+        or BitcoinGold private keys. If you want to be prompted for your
         seed, type '?' or ':' (concealed) """
         raise BaseException('Not a JSON-RPC command')
 
@@ -453,7 +453,7 @@ class Commands:
 
     @command('w')
     def setlabel(self, key, label):
-        """Assign a label to an item. Item may be a bitcoin address or a
+        """Assign a label to an item. Item may be a BitcoinGold address or a
         transaction ID"""
         self.wallet.set_label(key, label)
 
@@ -658,8 +658,8 @@ class Commands:
 
 param_descriptions = {
     'privkey': 'Private key. Type \'?\' to get a prompt.',
-    'destination': 'Bitcoin address, contact or alias',
-    'address': 'Bitcoin address',
+    'destination': 'BitcoinGold address, contact or alias',
+    'address': 'BitcoinGold address',
     'seed': 'Seed phrase',
     'txid': 'Transaction ID',
     'pos': 'Position',
@@ -816,7 +816,7 @@ def get_parser():
     subparsers = parser.add_subparsers(dest='cmd', metavar='<command>')
     # gui
     parser_gui = subparsers.add_parser('gui', description="Run Electrum's Graphical User Interface.", help="Run GUI (default)")
-    parser_gui.add_argument("url", nargs='?', default=None, help="bitcoin URI (or bip70 file)")
+    parser_gui.add_argument("url", nargs='?', default=None, help="BitcoinGold URI (or bip70 file)")
     parser_gui.add_argument("-g", "--gui", dest="gui", help="select graphical user interface", choices=['qt', 'kivy', 'text', 'stdio'])
     parser_gui.add_argument("-o", "--offline", action="store_true", dest="offline", default=False, help="Run offline")
     parser_gui.add_argument("-m", action="store_true", dest="hide_gui", default=False, help="hide GUI on startup")
