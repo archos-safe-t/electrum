@@ -78,7 +78,7 @@ class SimpleConfig(PrintError):
         self.cmdline_options.pop('config_version', None)
 
         # Set self.path and read the user config
-        self.user_config = {}  # for self.get in electrum-gold_path()
+        self.user_config = {}  # for self.get in electrumg_path()
         self.path = self.electrum_path()
         self.user_config = read_user_config_function(self.path)
         if not self.user_config:
@@ -99,7 +99,7 @@ class SimpleConfig(PrintError):
     def electrum_path(self):
         # Read electrum_path from command line
         # Otherwise use the user's default data directory.
-        path = self.get('electrum-gold_path')
+        path = self.get('electrumg_path')
         if path is None:
             path = self.user_dir()
 
@@ -119,7 +119,7 @@ class SimpleConfig(PrintError):
             path = os.path.join(path, 'regtest')
             make_dir(path)
 
-        self.print_error("electrum-gold directory", path)
+        self.print_error("electrumg directory", path)
         return path
 
     def rename_config_keys(self, config, keypairs, deprecation_warning=False):
@@ -214,9 +214,14 @@ class SimpleConfig(PrintError):
             return
         path = os.path.join(self.path, "config")
         s = json.dumps(self.user_config, indent=4, sort_keys=True)
-        with open(path, "w") as f:
-            f.write(s)
-        os.chmod(path, stat.S_IREAD | stat.S_IWRITE)
+        try:
+            with open(path, "w") as f:
+                f.write(s)
+            os.chmod(path, stat.S_IREAD | stat.S_IWRITE)
+        except FileNotFoundError:
+            # datadir probably deleted while running...
+            if os.path.exists(self.path):  # or maybe not?
+                raise
 
     def get_wallet_path(self):
         """Set the path of the wallet."""

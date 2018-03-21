@@ -38,6 +38,8 @@ from PyQt5.QtWidgets import *
 from electrum.i18n import _
 from electrum import ELECTRUM_VERSION, bitcoin, constants
 
+from .util import MessageBoxMixin
+
 issue_template = """<h2>Traceback</h2>
 <pre>
 {traceback}
@@ -45,7 +47,7 @@ issue_template = """<h2>Traceback</h2>
 
 <h2>Additional information</h2>
 <ul>
-  <li>Electrum version: {app_version}</li>
+  <li>ElectrumG version: {app_version}</li>
   <li>Operating system: {os}</li>
   <li>Wallet type: {wallet_type}</li>
   <li>Locale: {locale}</li>
@@ -54,28 +56,30 @@ issue_template = """<h2>Traceback</h2>
 report_server = "https://crashhub.electrum.org/crash"
 
 
-class Exception_Window(QWidget):
+class Exception_Window(QWidget, MessageBoxMixin):
     _active_window = None
 
     def __init__(self, main_window, exctype, value, tb):
         self.exc_args = (exctype, value, tb)
         self.main_window = main_window
         QWidget.__init__(self)
-        self.setWindowTitle('Electrum - ' + _('An Error Occured'))
+        self.setWindowTitle('ElectrumG - ' + _('An Error Occured'))
         self.setMinimumSize(600, 300)
 
         main_box = QVBoxLayout()
 
         heading = QLabel('<h2>' + _('Sorry!') + '</h2>')
         main_box.addWidget(heading)
-        main_box.addWidget(QLabel(_('Something went wrong while executing Electrum.')))
+        main_box.addWidget(QLabel(_('Something went wrong while executing ElectrumG.')))
 
         main_box.addWidget(QLabel(
             _('To help us diagnose and fix the problem, you can send us a bug report that contains useful debug '
               'information:')))
 
         collapse_info = QPushButton(_("Show report contents"))
-        collapse_info.clicked.connect(lambda: QMessageBox.about(self, "Report contents", self.get_report_string()))
+        collapse_info.clicked.connect(
+            lambda: self.msg_box(QMessageBox.NoIcon,
+                                 self, "Report contents", self.get_report_string()))
         main_box.addWidget(collapse_info)
 
         main_box.addWidget(QLabel(_("Please briefly describe what led to the error (optional):")))

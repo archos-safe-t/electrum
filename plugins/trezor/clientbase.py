@@ -65,7 +65,7 @@ class GuiMixin(object):
             msg = _("Enter a passphrase to generate this wallet.  Each time "
                     "you use this wallet your {} will prompt you for the "
                     "passphrase.  If you forget the passphrase you cannot "
-                    "access the bitcoins in the wallet.").format(self.device)
+                    "access the BitcoinGold in the wallet.").format(self.device)
         else:
             msg = _("Enter the passphrase to unlock this wallet:")
         passphrase = self.handler.get_passphrase(msg, self.creating_wallet)
@@ -118,6 +118,14 @@ class TrezorClientBase(GuiMixin, PrintError):
 
     def is_pairable(self):
         return not self.features.bootloader_mode
+
+    def has_usable_connection_with_device(self):
+        try:
+            res = self.ping("electrum pinging device")
+            assert res == "electrum pinging device"
+        except BaseException:
+            return False
+        return True
 
     def used(self):
         self.last_operation = time.time()

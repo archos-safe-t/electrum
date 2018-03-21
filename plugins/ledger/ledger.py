@@ -27,7 +27,7 @@ except ImportError:
 
 MSG_NEEDS_FW_UPDATE_GENERIC = _('Firmware version too old. Please update at') + \
                       ' https://www.ledgerwallet.com'
-MSG_NEEDS_FW_UPDATE_SEGWIT = _('Firmware version (or "Bitcoin" app) too old for Segwit support. Please update at') + \
+MSG_NEEDS_FW_UPDATE_SEGWIT = _('Firmware version (or "BitcoinGold" app) too old for Segwit support. Please update at') + \
                       ' https://www.ledgerwallet.com'
 MULTI_OUTPUT_SUPPORT = '1.1.4'
 SEGWIT_SUPPORT = '1.1.10'
@@ -56,6 +56,13 @@ class Ledger_Client():
 
     def i4b(self, x):
         return pack('>I', x)
+
+    def has_usable_connection_with_device(self):
+        try:
+            self.dongleObject.getFirmwareVersion()
+        except BaseException:
+            return False
+        return True
 
     def test_pin_unlocked(func):
         """Function decorator to test the Ledger for being unlocked, and if not,
@@ -181,7 +188,7 @@ class Ledger_Client():
                 self.perform_hw1_preflight()
             except BTChipException as e:
                 if (e.sw == 0x6d00):
-                    raise BaseException("Device not in Bitcoin mode")
+                    raise BaseException("Device not in BitcoinGold mode") from e
                 raise e
             self.preflightDone = True
 
@@ -512,13 +519,6 @@ class LedgerPlugin(HW_PluginBase):
         HW_PluginBase.__init__(self, parent, config, name)
         if self.libraries_available:
             self.device_manager().register_devices(self.DEVICE_IDS)
-
-    def btchip_is_connected(self, keystore):
-        try:
-            self.get_client(keystore).getFirmwareVersion()
-        except Exception as e:
-            return False
-        return True
 
     def get_btchip_device(self, device):
         ledger = False

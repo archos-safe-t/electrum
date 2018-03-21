@@ -5,10 +5,10 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules, coll
 import sys
 import os
 
-PACKAGE='ElectrumGold'
-PYPKG='electrum-gold'
-MAIN_SCRIPT='electrum-gold'
-ICONS_FILE='electrum-gold.icns'
+PACKAGE='ElectrumG'
+PYPKG='electrumg'
+MAIN_SCRIPT='electrumg'
+ICONS_FILE='electrumg.icns'
 
 for i, x in enumerate(sys.argv):
     if x == '--name':
@@ -57,8 +57,6 @@ a = Analysis([electrum+MAIN_SCRIPT,
               electrum+'lib/bitcoin.py',
               electrum+'lib/dnssec.py',
               electrum+'lib/commands.py',
-              electrum+'plugins/cosigner_pool/qt.py',
-              electrum+'plugins/email_requests/qt.py',
               electrum+'plugins/trezor/client.py',
               electrum+'plugins/trezor/qt.py',
               electrum+'plugins/keepkey/qt.py',

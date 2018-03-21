@@ -1,9 +1,9 @@
 include LICENCE RELEASE-NOTES AUTHORS
 include README.rst
-include electrum-gold.conf.sample
-include electrum-gold.desktop
+include electrumg.conf.sample
+include electrumg.desktop
 include *.py
-include electrum-gold
+include electrumg
 include contrib/requirements/requirements.txt
 include contrib/requirements/requirements-hw.txt
 recursive-include lib *.py

@@ -1,4 +1,4 @@
-name: electrum-gold
+name: electrumg
 version: master
 summary: BitcoinGold thin client
 description: |
@@ -9,7 +9,7 @@ confinement: strict
 
 apps:
   electrum:
-    command: desktop-launch electrum-gold
+    command: desktop-launch electrumg
     plugs: [network, network-bind, x11, unity7]
 
 parts:
