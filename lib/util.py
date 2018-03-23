@@ -790,7 +790,7 @@ def versiontuple(v):
 
 def import_meta(path, validater, load_meta):
     try:
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             d = validater(json.loads(f.read()))
         load_meta(d)
     #backwards compatibility for JSONDecodeError
@@ -804,7 +804,7 @@ def import_meta(path, validater, load_meta):
 
 def export_meta(meta, fileName):
     try:
-        with open(fileName, 'w+') as f:
+        with open(fileName, 'w+', encoding='utf-8') as f:
             json.dump(meta, f, indent=4, sort_keys=True)
     except (IOError, os.error) as e:
         traceback.print_exc(file=sys.stderr)
