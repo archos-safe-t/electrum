@@ -1,5 +1,10 @@
 {
-    "127.0.0.1": {
+    "electrumx-eu.bitcoingold.org": {
+        "pruning": "-",
+        "s": "50002",
+        "version": "1.2"
+    },
+    "electrumx-us.bitcoingold.org": {
         "pruning": "-",
         "s": "50002",
         "version": "1.2"
