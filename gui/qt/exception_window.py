@@ -53,7 +53,7 @@ issue_template = """<h2>Traceback</h2>
   <li>Locale: {locale}</li>
 </ul>
 """
-report_server = "https://crashhub.electrum.org/crash"
+report_server = "localhost"
 
 
 class Exception_Window(QWidget, MessageBoxMixin):
@@ -72,10 +72,13 @@ class Exception_Window(QWidget, MessageBoxMixin):
         main_box.addWidget(heading)
         main_box.addWidget(QLabel(_('Something went wrong while executing ElectrumG.')))
 
+        main_box.addWidget(QLabel(_("Please report this issue manually at https://github.com/BTCGPU/electrum/issues")))
+        main_box.addWidget(QLabel(self.get_report_string()))
+        '''
         main_box.addWidget(QLabel(
             _('To help us diagnose and fix the problem, you can send us a bug report that contains useful debug '
-              'information:')))
-
+              'information:')))       
+        
         collapse_info = QPushButton(_("Show report contents"))
         collapse_info.clicked.connect(
             lambda: self.msg_box(QMessageBox.NoIcon,
@@ -83,7 +86,7 @@ class Exception_Window(QWidget, MessageBoxMixin):
         main_box.addWidget(collapse_info)
 
         main_box.addWidget(QLabel(_("Please briefly describe what led to the error (optional):")))
-
+        
         self.description_textfield = QTextEdit()
         self.description_textfield.setFixedHeight(50)
         main_box.addWidget(self.description_textfield)
@@ -105,6 +108,13 @@ class Exception_Window(QWidget, MessageBoxMixin):
         close_button.clicked.connect(self.close)
         buttons.addWidget(close_button)
 
+        main_box.addLayout(buttons)
+        '''
+
+        buttons = QHBoxLayout()
+        close_button = QPushButton(_('Close'))
+        close_button.clicked.connect(self.close)
+        buttons.addWidget(close_button)
         main_box.addLayout(buttons)
 
         self.setLayout(main_box)
@@ -163,8 +173,8 @@ class Exception_Window(QWidget, MessageBoxMixin):
             "app_version": ELECTRUM_VERSION,
             "os": platform.platform(),
             "wallet_type": "unknown",
-            "locale": locale.getdefaultlocale()[0],
-            "description": self.description_textfield.toPlainText()
+            "locale": locale.getdefaultlocale()[0]
+            #"description": self.description_textfield.toPlainText()
         }
         try:
             args["wallet_type"] = self.main_window.wallet.wallet_type
