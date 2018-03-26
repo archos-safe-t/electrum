@@ -188,7 +188,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             # partials, lambdas or methods of subobjects.  Hence...
             self.network.register_callback(self.on_network, interests)
             # set initial message
-            self.console.showMessage(self.network.banner)
+            self.console.showMessage(_('Welcome to ElectrumG!'))
             self.network.register_callback(self.on_quotes, ['on_quotes'])
             self.network.register_callback(self.on_history, ['on_history'])
             self.new_fx_quotes_signal.connect(self.on_fx_quotes)
@@ -299,8 +299,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         # Handle a network message in the GUI thread
         if event == 'status':
             self.update_status()
-        elif event == 'banner':
-            self.console.showMessage(args[0])
         elif event == 'verified':
             self.history_list.update_item(*args)
         elif event == 'fee':
