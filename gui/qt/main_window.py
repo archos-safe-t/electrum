@@ -2058,9 +2058,15 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def remove_wallet(self):
         if self.question('\n'.join([
                 _('Delete wallet file?'),
-                "%s"%self.wallet.storage.path,
-                _('If your wallet contains funds, make sure you have saved its seed.')])):
-            self._delete_wallet()
+                "%s" % self.wallet.storage.path,
+                _('If your wallet contains funds, make sure you have saved its seed.')]),
+                title='ElectrumG', icon=QMessageBox.Warning):
+            if self.question('\n'.join([
+                _('Are you sure you want to delete this wallet file?'),
+                "%s" % self.wallet.storage.path, '\n',
+                _("This CANNOT be undone!")]),
+                    title='ElectrumG', icon=QMessageBox.Warning):
+                self._delete_wallet()
 
     @protected
     def _delete_wallet(self, password):
