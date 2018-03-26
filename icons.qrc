@@ -1,6 +1,7 @@
 <RCC>
   <qresource prefix="/" >
     <file>icons/electrumg.png</file>
+    <file>icons/electrumg_small.png</file>
     <file>icons/clock1.png</file>
     <file>icons/clock2.png</file>
     <file>icons/clock3.png</file>
