@@ -89,6 +89,7 @@ class TxDialog(QDialog, MessageBoxMixin):
         qr_show = lambda: parent.show_qrcode(str(self.tx_hash_e.text()), 'Transaction ID', parent=self)
         self.tx_hash_e.addButton(":icons/qrcode.png", qr_show, _("Show as QR code"))
         self.tx_hash_e.setReadOnly(True)
+        self.tx_hash_e.setCursor(Qt.IBeamCursor)
         vbox.addWidget(self.tx_hash_e)
         self.tx_desc = QLabel()
         vbox.addWidget(self.tx_desc)
