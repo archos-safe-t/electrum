@@ -152,7 +152,7 @@ class BitcoinGoldRegtest(BitcoinGoldBase):
     ADDRTYPE_P2SH = 196
     SEGWIT_HRP = "tbtg"
 
-    HEADERS_URL = "https://headers.bitcoingold.org/blockchain_headers"
+    HEADERS_URL = None
     GENESIS = "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
 
     DEFAULT_SERVERS = read_json('servers_regtest.json', {})
