@@ -27,6 +27,9 @@ import os
 import json
 from sys import maxsize
 
+GIT_REPO_URL = "https://github.com/BTCGPU/electrum"
+GIT_ISSUE_URL = GIT_REPO_URL + "/issues"
+
 
 def read_json(filename, default):
     path = os.path.join(os.path.dirname(__file__), filename)

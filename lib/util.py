@@ -502,14 +502,14 @@ def time_difference(distance_in_time, include_seconds):
 
 # TODO: Add more mainnet block explorer
 mainnet_block_explorers = {
-    'BitcoinGold.org': ('https://explorer.bitcoingold.org/',
+    'BitcoinGold.org': ('https://explorer.bitcoingold.org/insight/',
                         {'tx': 'tx/', 'addr': 'address/'}),
     'system default': ('blockchain:/',
                         {'tx': 'tx/', 'addr': 'address/'}),
 }
 
 testnet_block_explorers = {
-    'BitcoinGold.org': ('https://test-explorer.bitcoingold.org/',
+    'BitcoinGold.org': ('https://test-explorer.bitcoingold.org/insight/',
                         {'tx': 'tx/', 'addr': 'address/'}),
     'system default': ('blockchain://000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943/',
                        {'tx': 'tx/', 'addr': 'address/'}),

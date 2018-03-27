@@ -21,7 +21,8 @@
 # ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import json
+import webbrowser
+
 import locale
 import platform
 import traceback
@@ -29,10 +30,8 @@ import os
 import sys
 import subprocess
 
-import requests
 from PyQt5.QtCore import QObject
 import PyQt5.QtCore as QtCore
-from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 
 from electrum.i18n import _
@@ -51,9 +50,10 @@ issue_template = """<h2>Traceback</h2>
   <li>Operating system: {os}</li>
   <li>Wallet type: {wallet_type}</li>
   <li>Locale: {locale}</li>
+  <li>Testnet: {testnet}</li>
+  <li>Regtest: {regtest}</li>
 </ul>
 """
-report_server = "https://crashhub.electrum.org/crash"
 
 
 class Exception_Window(QWidget, MessageBoxMixin):
@@ -72,29 +72,20 @@ class Exception_Window(QWidget, MessageBoxMixin):
         main_box.addWidget(heading)
         main_box.addWidget(QLabel(_('Something went wrong while executing ElectrumG.')))
 
-        main_box.addWidget(QLabel(
-            _('To help us diagnose and fix the problem, you can send us a bug report that contains useful debug '
-              'information:')))
+        main_box.addWidget(QLabel(_('Please create a bug report with the following content to help us diagnose and fix the problem:')))
 
-        collapse_info = QPushButton(_("Show report contents"))
-        collapse_info.clicked.connect(
-            lambda: self.msg_box(QMessageBox.NoIcon,
-                                 self, "Report contents", self.get_report_string()))
-        main_box.addWidget(collapse_info)
+        description_textfield = QTextEdit()
+        description_textfield.setFixedHeight(250)
+        description_textfield.setReadOnly(True)
+        description_textfield.setText(self.get_report_string())
+        main_box.addWidget(description_textfield)
 
-        main_box.addWidget(QLabel(_("Please briefly describe what led to the error (optional):")))
-
-        self.description_textfield = QTextEdit()
-        self.description_textfield.setFixedHeight(50)
-        main_box.addWidget(self.description_textfield)
-
-        main_box.addWidget(QLabel(_("Do you want to send this report?")))
+        main_box.addWidget(QLabel(_("Do you want to report this?")))
 
         buttons = QHBoxLayout()
 
-        report_button = QPushButton(_('Send Bug Report'))
-        report_button.clicked.connect(self.send_report)
-        report_button.setIcon(QIcon(":icons/tab_send.png"))
+        report_button = QPushButton(_('Report Bug'))
+        report_button.clicked.connect(self.file_report)
         buttons.addWidget(report_button)
 
         never_button = QPushButton(_('Never'))
@@ -110,30 +101,10 @@ class Exception_Window(QWidget, MessageBoxMixin):
         self.setLayout(main_box)
         self.show()
 
-    def send_report(self):
-        if constants.net.GENESIS[-4:] not in ["4943", "e26f"] and ".electrum.org" in report_server:
-            # Gah! Some kind of altcoin wants to send us crash reports.
-            self.main_window.show_critical(_("Please report this issue manually."))
-            return
-        report = self.get_traceback_info()
-        report.update(self.get_additional_info())
-        report = json.dumps(report)
-        try:
-            response = requests.post(report_server, data=report, timeout=20)
-        except BaseException as e:
-            traceback.print_exc(file=sys.stderr)
-            self.main_window.show_critical(_('There was a problem with the automatic reporting:') + '\n' +
-                                           str(e) + '\n' +
-                                           _("Please report this issue manually."))
-            return
-        else:
-            QMessageBox.about(self, "Crash report", response.text)
-            self.close()
-
-    def on_close(self):
-        Exception_Window._active_window = None
-        sys.__excepthook__(*self.exc_args)
-        self.close()
+    def file_report(self):
+        self.main_window.app.clipboard().setText(self.get_report_string())
+        self.show_message(_("Text copied to clipboard"))
+        webbrowser.open(constants.GIT_ISSUE_URL, new=2)
 
     def show_never(self):
         self.main_window.config.set_key("show_crash_reporter", False)
@@ -143,28 +114,14 @@ class Exception_Window(QWidget, MessageBoxMixin):
         self.on_close()
         event.accept()
 
-    def get_traceback_info(self):
-        exc_string = str(self.exc_args[1])
-        stack = traceback.extract_tb(self.exc_args[2])
-        readable_trace = "".join(traceback.format_list(stack))
-        id = {
-            "file": stack[-1].filename,
-            "name": stack[-1].name,
-            "type": self.exc_args[0].__name__
-        }
-        return {
-            "exc_string": exc_string,
-            "stack": readable_trace,
-            "id": id
-        }
-
     def get_additional_info(self):
         args = {
             "app_version": ELECTRUM_VERSION,
             "os": platform.platform(),
             "wallet_type": "unknown",
             "locale": locale.getdefaultlocale()[0],
-            "description": self.description_textfield.toPlainText()
+            "testnet": constants.net.TESTNET,
+            "regtest": constants.net.REGTEST
         }
         try:
             args["wallet_type"] = self.main_window.wallet.wallet_type

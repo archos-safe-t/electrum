@@ -124,8 +124,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.create_status_bar()
         self.need_update = threading.Event()
 
-        self.decimal_point = config.get('decimal_point', 5)
-        self.num_zeros     = int(config.get('num_zeros',0))
+        self.decimal_point = config.get('decimal_point', 8)
+        self.num_zeros     = int(config.get('num_zeros', 0))
 
         self.completions = QStringListModel()
 
@@ -188,7 +188,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             # partials, lambdas or methods of subobjects.  Hence...
             self.network.register_callback(self.on_network, interests)
             # set initial message
-            self.console.showMessage(self.network.banner)
+            self.console.showMessage(_('Welcome to ElectrumG!'))
             self.network.register_callback(self.on_quotes, ['on_quotes'])
             self.network.register_callback(self.on_history, ['on_history'])
             self.new_fx_quotes_signal.connect(self.on_fx_quotes)
@@ -299,8 +299,6 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         # Handle a network message in the GUI thread
         if event == 'status':
             self.update_status()
-        elif event == 'banner':
-            self.console.showMessage(args[0])
         elif event == 'verified':
             self.history_list.update_item(*args)
         elif event == 'fee':
@@ -556,7 +554,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def show_report_bug(self):
         msg = ' '.join([
             _("Please report any bugs as issues on github:<br/>"),
-            "<a href=\"https://github.com/btcgpu/electrum/issues\">https://github.com/btcgpu/electrum/issues</a><br/><br/>",
+            "<a href=\"{0}\">{0}</a><br/><br/>".format(constants.GIT_ISSUE_URL),
             _("Before reporting a bug, upgrade to the most recent version of ElectrumG (latest release or git HEAD), and include the version number in your report."),
             _("Try to explain not only what the bug is, but how it occurs.")
          ])
@@ -2060,9 +2058,15 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def remove_wallet(self):
         if self.question('\n'.join([
                 _('Delete wallet file?'),
-                "%s"%self.wallet.storage.path,
-                _('If your wallet contains funds, make sure you have saved its seed.')])):
-            self._delete_wallet()
+                "%s" % self.wallet.storage.path,
+                _('If your wallet contains funds, make sure you have saved its seed.')]),
+                title='ElectrumG', icon=QMessageBox.Warning):
+            if self.question('\n'.join([
+                _('Are you sure you want to delete this wallet file?'),
+                "%s" % self.wallet.storage.path, '\n',
+                _("This CANNOT be undone!")]),
+                    title='ElectrumG', icon=QMessageBox.Warning):
+                self._delete_wallet()
 
     @protected
     def _delete_wallet(self, password):
