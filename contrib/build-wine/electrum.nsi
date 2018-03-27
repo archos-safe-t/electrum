@@ -77,15 +77,38 @@
 ;--------------------------------
 ;Pages
 
+  !insertmacro MUI_PAGE_WELCOME
+  !insertmacro MUI_PAGE_COMPONENTS
   !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_INSTFILES
+
+    # Setting for finish page
+    !define MUI_FINISHPAGE_SHOWREADME
+    !define MUI_FINISHPAGE_SHOWREADME_TEXT "Launch ${PRODUCT_NAME}"
+    !define MUI_FINISHPAGE_SHOWREADME_FUNCTION RunApplication
+  !insertmacro MUI_PAGE_FINISH
+
+  !insertmacro MUI_UNPAGE_WELCOME
   !insertmacro MUI_UNPAGE_CONFIRM
   !insertmacro MUI_UNPAGE_INSTFILES
+  !insertmacro MUI_UNPAGE_FINISH
 
 ;--------------------------------
 ;Languages
 
   !insertmacro MUI_LANGUAGE "English"
+
+;--------------------------------
+Section "Start with Windows" SecStartup
+SectionEnd
+
+;--------------------------------
+;Descriptions
+  LangString DESC_SecStartup ${LANG_ENGLISH} "Run ${PRODUCT_NAME} on Windows Startup"
+
+  !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecStartup} $(DESC_SecStartup)
+  !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;--------------------------------
 ;Installer Sections
@@ -101,6 +124,10 @@ Function .onInit
 	${EndIf}
 FunctionEnd
 
+Function RunApplication
+  ExecShell "" "$INSTDIR\electrumg-${PRODUCT_VERSION}.exe"
+FunctionEnd
+
 Section
   SetOutPath $INSTDIR
 
@@ -108,7 +135,8 @@ Section
   RMDir /r "$INSTDIR\*.*"
   Delete "$DESKTOP\${PRODUCT_NAME}.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\*.*"
-  
+  Delete "$SMSTARTUP\${PRODUCT_NAME}.lnk"
+
   ;Files to pack into the installer
   File /r "dist\electrumg\*.*"
   File "..\..\icons\electrumg.ico"
@@ -131,7 +159,6 @@ Section
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk" "$INSTDIR\electrumg-${PRODUCT_VERSION}.exe" "" "$INSTDIR\electrumg-${PRODUCT_VERSION}.exe" 0
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME} Testnet.lnk" "$INSTDIR\electrumg-${PRODUCT_VERSION}.exe" "--testnet" "$INSTDIR\electrumg-${PRODUCT_VERSION}.exe" 0
 
-
   ;Links bitcoingold: URI's to ElectrumG
   WriteRegStr HKCU "Software\Classes\bitcoingold" "" "URL:bitcoingold Protocol"
   WriteRegStr HKCU "Software\Classes\bitcoingold" "URL Protocol" ""
@@ -150,6 +177,10 @@ Section
   ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
   IntFmt $0 "0x%08X" $0
   WriteRegDWORD HKCU "${PRODUCT_UNINST_KEY}" "EstimatedSize" "$0"
+
+  ${If} ${SectionIsSelected} ${SecStartup}
+    CreateShortCut "$SMSTARTUP\${PRODUCT_NAME}.lnk" "$INSTDIR\electrumg-${PRODUCT_VERSION}.exe" ""
+  ${EndIf}
 SectionEnd
 
 ;--------------------------------
@@ -165,6 +196,7 @@ Section "Uninstall"
 
   Delete "$DESKTOP\${PRODUCT_NAME}.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\*.*"
+  Delete "$SMSTARTUP\${PRODUCT_NAME}.lnk"
   RMDir  "$SMPROGRAMS\${PRODUCT_NAME}"
   
   DeleteRegKey HKCU "Software\Classes\bitcoingold"
