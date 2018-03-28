@@ -124,6 +124,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.create_status_bar()
         self.need_update = threading.Event()
 
+        self.minimize_to_tray = config.get('minimize_tray', True)
         self.decimal_point = config.get('decimal_point', 8)
         self.num_zeros     = int(config.get('num_zeros', 0))
 
@@ -299,6 +300,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         # Handle a network message in the GUI thread
         if event == 'status':
             self.update_status()
+        elif event == 'banner':
+            pass
         elif event == 'verified':
             self.history_list.update_item(*args)
         elif event == 'fee':
@@ -2613,6 +2616,19 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         lang_combo.currentIndexChanged.connect(on_lang)
         gui_widgets.append((lang_label, lang_combo))
 
+        # minimize to tray
+        mini_help = _('Set if the wallet should minimize to system tray instead of closing')
+        mini_label = HelpLabel(_('Minimize to tray') + ':', mini_help)
+        mini_checkbox = QCheckBox()
+        mini_checkbox.setChecked(self.minimize_to_tray)
+        if not self.config.is_modifiable('minimize_tray'):
+            for w in [mini_checkbox, mini_label]: w.setEnabled(False)
+        def on_minimize_tray(i):
+            self.minimize_to_tray = mini_checkbox.isChecked()
+            self.config.set_key('minimize_tray', self.minimize_to_tray, True)
+        mini_checkbox.stateChanged.connect(on_minimize_tray)
+        gui_widgets.append((mini_label, mini_checkbox))
+
         nz_help = _('Number of zeros displayed after the decimal point. For example, if this is set to 2, "1." will be displayed as "1.00"')
         nz_label = HelpLabel(_('Zeros after decimal point') + ':', nz_help)
         nz = QSpinBox()
@@ -2666,34 +2682,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.config.set_key('use_rbf', x == Qt.Checked)
         use_rbf_cb.stateChanged.connect(on_use_rbf)
         fee_widgets.append((use_rbf_cb, None))
-        '''
-        msg = _('OpenAlias record, used to receive coins and to sign payment requests.') + '\n\n'\
-              + _('The following alias providers are available:') + '\n'\
-              + '\n'.join(['https://cryptoname.co/', 'http://xmr.link']) + '\n\n'\
-              + 'For more information, see http://openalias.org'
-        alias_label = HelpLabel(_('OpenAlias') + ':', msg)
-        alias = self.config.get('alias','')
-        alias_e = QLineEdit(alias)
-        def set_alias_color():
-            if not self.config.get('alias'):
-                alias_e.setStyleSheet("")
-                return
-            if self.alias_info:
-                alias_addr, alias_name, validated = self.alias_info
-                alias_e.setStyleSheet((ColorScheme.GREEN if validated else ColorScheme.RED).as_stylesheet(True))
-            else:
-                alias_e.setStyleSheet(ColorScheme.RED.as_stylesheet(True))
-        def on_alias_edit():
-            alias_e.setStyleSheet("")
-            alias = str(alias_e.text())
-            self.config.set_key('alias', alias, True)
-            if alias:
-                self.fetch_alias()
-        set_alias_color()
-        self.alias_received_signal.connect(set_alias_color)
-        alias_e.editingFinished.connect(on_alias_edit)
-        id_widgets.append((alias_label, alias_e))
-        '''
+
         # SSL certificate
         msg = ' '.join([
             _('SSL certificate used to sign payment requests.'),
@@ -2979,19 +2968,26 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if self.fx:
             self.fx.timeout = 0
 
-        #self.alias_received_signal.disconnect(set_alias_color)
-
         run_hook('close_settings_dialog')
         if self.need_restart:
             self.show_warning(_('Please restart ElectrumG to activate the new GUI settings'), title=_('Success'))
 
-
     def closeEvent(self, event):
-        # It seems in some rare cases this closeEvent() is called twice
-        if not self.cleaned_up:
-            self.cleaned_up = True
-            self.clean_up()
-        event.accept()
+        if self.is_hidden() or not self.minimize_to_tray:
+            # It seems in some rare cases this closeEvent() is called twice
+            if not self.cleaned_up:
+                self.cleaned_up = True
+                self.clean_up()
+            event.accept()
+        else:
+            event.ignore()
+            self.hide()
+            self.tray.showMessage(
+                _("Info"),
+                _("Wallet was minimized to Tray"),
+                QSystemTrayIcon.Information,
+                1500
+            )
 
     def clean_up(self):
         self.wallet.thread.stop()

@@ -419,7 +419,7 @@ if __name__ == '__main__':
         constants.set_testnet()
 
     if config.get('regtest'):
-        bitcoin.NetworkConstants.set_regtest()
+        constants.set_regtest()
 
     # run non-RPC commands separately
     if cmdname in ['create', 'restore']:
