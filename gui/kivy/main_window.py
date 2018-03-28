@@ -636,7 +636,7 @@ class ElectrumWindow(App):
         elif self.network.is_connected():
             server_height = self.network.get_server_height()
             server_lag = self.network.get_local_height() - server_height
-            if not self.wallet.up_to_date or server_height == 0:
+            if not self.wallet.up_to_date or server_height == 0 or server_lag < 0:
                 status = _("Synchronizing...")
             elif server_lag > 1:
                 status = _("Server lagging")

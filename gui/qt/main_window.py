@@ -706,7 +706,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             # Server height can be 0 after switching to a new server
             # until we get a headers subscription request response.
             # Display the synchronizing message in that case.
-            if not self.wallet.up_to_date or server_height == 0:
+            if not self.wallet.up_to_date or server_height == 0 or server_lag < 0:
                 text = _("Synchronizing...")
                 icon = QIcon(":icons/status_waiting.png")
             elif server_lag > 1:
