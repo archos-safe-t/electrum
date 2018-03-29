@@ -238,7 +238,7 @@ class SimpleConfig(PrintError):
         # default path
         if not os.path.exists(self.path):
             raise FileNotFoundError(
-                _('Electrum datadir does not exist. Was it deleted while running?') + '\n' +
+                _('ElectrumG datadir does not exist. Was it deleted while running?') + '\n' +
                 _('Should be at {}').format(self.path))
         dirpath = os.path.join(self.path, "wallets")
         if not os.path.exists(dirpath):

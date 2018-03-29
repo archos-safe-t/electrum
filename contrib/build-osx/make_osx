@@ -2,7 +2,7 @@
 
 # Parameterize
 PYTHON_VERSION=3.6.4
-BUILDDIR=/tmp/electrum-build
+BUILDDIR=/tmp/electrumg-build
 PACKAGE=ElectrumG
 GIT_REPO=https://github.com/BTCGPU/electrum
 
@@ -60,9 +60,9 @@ python3 -m pip install -Ir ./contrib/deterministic-build/requirements.txt --user
 python3 -m pip install -Ir ./contrib/deterministic-build/requirements-binaries.txt --user || \
 fail "Could not install requirements"
 
-#info "Installing hardware wallet requirements..."
-#python3 -m pip install -Ir ./contrib/deterministic-build/requirements-hw.txt --user || \
-#fail "Could not install hardware wallet requirements"
+info "Installing hardware wallet requirements..."
+python3 -m pip install -Ir ./contrib/deterministic-build/requirements-hw.txt --user || \
+fail "Could not install hardware wallet requirements"
 
 info "Building $PACKAGE..."
 python3 setup.py install --user > /dev/null || fail "Could not build $PACKAGE"

@@ -1591,7 +1591,7 @@ class Abstract_Wallet(PrintError):
     def add_payment_request(self, req, config):
         addr = req['address']
         if not bitcoin.is_address(addr):
-            raise Exception(_('Invalid Bitcoin address.'))
+            raise Exception(_('Invalid BitcoinGold address.'))
         if not self.is_mine(addr):
             raise Exception(_('Address not in wallet.'))
 
