@@ -53,7 +53,7 @@ class BaseWizard(object):
         self.keystores = []
         self.is_kivy = config.get('gui') == 'kivy'
         self.seed_type = None
-        self.hw_wallet_enabled = False
+        self.hw_wallet_enabled = True
 
     def run(self, *args):
         action = args[0]
