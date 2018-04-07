@@ -1052,7 +1052,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         completer = QCompleter()
         completer.setCaseSensitivity(False)
-        self.payto_e.setCompleter(completer)
+        self.payto_e.set_completer(completer)
         completer.setModel(self.completions)
 
         msg = _('Description of the transaction (not mandatory).') + '\n\n'\
@@ -1840,6 +1840,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
     def show_invoice(self, key):
         pr = self.invoices.get(key)
+        if pr is None:
+            self.show_error('Cannot find payment request in wallet.')
+            return
         pr.verify(self.contacts)
         self.show_pr_details(pr)
 

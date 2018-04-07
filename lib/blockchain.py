@@ -83,6 +83,8 @@ def serialize_header(header, legacy=False):
 
 
 def deserialize_header(header, height):
+    if not header:
+        raise Exception('Invalid header: {}'.format(header))
     h = dict(
         block_height=height,
         version=hex_to_int(header[0:4]),
