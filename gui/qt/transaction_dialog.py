@@ -56,6 +56,13 @@ def show_transaction(tx, parent, desc=None, prompt_if_unsaved=False):
         d.show()
 
 
+def default_label(text=None):
+    label = QLabel(text)
+    label.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard)
+    label.setCursor(Qt.IBeamCursor)
+    return label
+
+
 class TxDialog(QDialog, MessageBoxMixin):
 
     def __init__(self, tx, parent, desc, prompt_if_unsaved):
@@ -91,17 +98,17 @@ class TxDialog(QDialog, MessageBoxMixin):
         self.tx_hash_e.setReadOnly(True)
         self.tx_hash_e.setCursor(Qt.IBeamCursor)
         vbox.addWidget(self.tx_hash_e)
-        self.tx_desc = QLabel()
+        self.tx_desc = default_label()
         vbox.addWidget(self.tx_desc)
-        self.status_label = QLabel()
+        self.status_label = default_label()
         vbox.addWidget(self.status_label)
-        self.date_label = QLabel()
+        self.date_label = default_label()
         vbox.addWidget(self.date_label)
-        self.amount_label = QLabel()
+        self.amount_label = default_label()
         vbox.addWidget(self.amount_label)
-        self.size_label = QLabel()
+        self.size_label = default_label()
         vbox.addWidget(self.size_label)
-        self.fee_label = QLabel()
+        self.fee_label = default_label()
         vbox.addWidget(self.fee_label)
 
         self.add_io(vbox)
@@ -257,7 +264,7 @@ class TxDialog(QDialog, MessageBoxMixin):
 
     def add_io(self, vbox):
         if self.tx.locktime > 0:
-            vbox.addWidget(QLabel("LockTime: %d\n" % self.tx.locktime))
+            vbox.addWidget(default_label("LockTime: %d\n" % self.tx.locktime))
 
         vbox.addWidget(QLabel(_("Inputs") + ' (%d)'%len(self.tx.inputs())))
         ext = QTextCharFormat()
