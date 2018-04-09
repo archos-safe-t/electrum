@@ -222,6 +222,7 @@ class Network(util.DaemonThread):
         self.connecting = set()
         self.requested_chunks = set()
         self.socket_queue = queue.Queue()
+        self.is_bootstrapping = False
         self.start_network(deserialize_server(self.default_server)[2],
                            deserialize_proxy(self.config.get('proxy')))
 
@@ -969,23 +970,58 @@ class Network(util.DaemonThread):
     def init_headers_file(self):
         b = self.blockchains[0]
         filename = b.path()
-        b.update_size()
 
-        length = len(constants.net.CHECKPOINTS) * difficulty_adjustment_interval()
-        if not os.path.exists(filename) or b.size() < length:
-            offset, header_size = b.get_offset(length)
+        if not os.path.exists(filename):
+            ret, msg = self.do_bootstrap(filename)
 
-            def fill_header(f):
-                if length > 0:
-                    f.seek(offset-1)
-                    f.write(b'\x00')
+            if not ret:
+                b.update_size()
 
-            blockchain.write_file(filename, fill_header, b.lock, 'wb+')
+                length = len(constants.net.CHECKPOINTS) * difficulty_adjustment_interval()
+                if b.size() < length:
+                    self.print_error('Error doing online bootstrap: ' + msg)
+                    self.print_msg('Fallback to checkpoint bootstrap (if any)')
+
+                    offset, header_size = b.get_offset(length)
+
+                    def fill_header(f):
+                        if length > 0:
+                            f.seek(offset-1)
+                            f.write(b'\x00')
+
+                    blockchain.write_file(filename, fill_header, b.lock, 'wb+')
 
             b.update_size()
 
+    def do_bootstrap(self, dest_file):
+        if not os.path.exists(dest_file):
+            # Check for existing url
+            if constants.net.HEADERS_URL is None:
+                return False, 'No headers url for ' + str(constants.net.__name__)
+            else:
+                try:
+                    self.print_msg('Doing online bootstrap ...')
+
+                    # Download bootstrap file
+                    util.download_bootstrap(constants.net.HEADERS_URL, dest_file)
+
+                    self.print_msg('Bootstrap done.')
+                except Exception as e:
+                    # Cleanup
+                    if os.path.exists(dest_file):
+                        try:
+                            os.remove(dest_file)
+                        except:
+                            pass
+
+                    return False, str(e)
+
+        return True, None
+
     def run(self):
+        self.is_bootstrapping = True
         self.init_headers_file()
+        self.is_bootstrapping = False
         while self.is_running():
             self.maintain_sockets()
             self.wait_on_sockets()

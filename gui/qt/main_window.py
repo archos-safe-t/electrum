@@ -709,6 +709,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             text = _("Offline")
             icon = QIcon(":icons/status_disconnected.png")
 
+        elif self.network.is_bootstrapping:
+            text = _("Bootstrapping - Do not interrupt. Please stand by...")
+            icon = QIcon(":icons/status_waiting.png")
+
         elif self.network.is_connected():
             server_height = self.network.get_server_height()
             server_lag = self.network.get_local_height() - server_height
