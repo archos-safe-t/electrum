@@ -390,9 +390,6 @@ def bh2u(x):
     return hfu(x).decode('ascii')
 
 
-class CompactError(Exception):
-    """ Thrown when there's a problem with compact size """
-
 def user_dir():
     if 'ANDROID_DATA' in os.environ:
         return android_check_data_dir()
