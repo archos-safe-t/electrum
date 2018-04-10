@@ -722,7 +722,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             # until we get a headers subscription request response.
             # Display the synchronizing message in that case.
             if not self.wallet.up_to_date or server_height == 0 or server_lag < 0:
-                text = _("Synchronizing...")
+                text = _("Synchronizing...") + ' ({}/{})'.format(self.network.get_local_height(), server_height)
                 icon = QIcon(":icons/status_waiting.png")
             elif server_lag > 1:
                 text = _("Server is lagging ({} blocks)").format(server_lag)
@@ -1911,7 +1911,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         console.updateNamespace({'wallet' : self.wallet,
                                  'network' : self.network,
-                                 #'plugins' : self.gui_object.plugins,
+                                 'plugins' : self.gui_object.plugins,
                                  'window': self})
         console.updateNamespace({'util' : util, 'bitcoingold':bitcoin})
 
