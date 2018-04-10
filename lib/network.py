@@ -978,10 +978,11 @@ class Network(util.DaemonThread):
             if not ret:
                 b.update_size()
 
+                self.print_error('Error doing online bootstrap: ' + msg)
+                self.print_msg('Fallback to checkpoint bootstrap (if any)')
+
                 length = len(constants.net.CHECKPOINTS) * difficulty_adjustment_interval()
-                if b.size() < length:
-                    self.print_error('Error doing online bootstrap: ' + msg)
-                    self.print_msg('Fallback to checkpoint bootstrap (if any)')
+                if length > 0:
 
                     offset, header_size = b.get_offset(length)
 
@@ -991,6 +992,12 @@ class Network(util.DaemonThread):
                             f.write(b'\x00')
 
                     blockchain.write_file(filename, fill_header, b.lock, 'wb+')
+                    self.print_msg('Checkpoints written.')
+                else:
+                    self.print_error('No checkpoints available!')
+                    self.print_msg('Fallback to sync from genesis')
+
+                    blockchain.write_file(filename, lambda f: f.seek(0), b.lock, 'wb+')
 
             b.update_size()
 
