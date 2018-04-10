@@ -77,10 +77,6 @@ def hex_to_int(s):
 SIGHASH_ALL    = 1
 SIGHASH_FORKID = 0x40
 
-FEE_STEP = 10000
-MAX_FEE_RATE = 300000
-
-
 COINBASE_MATURITY = 100
 COIN = 100000000
 
@@ -925,7 +921,7 @@ def _CKD_priv(k, c, s, is_prime):
 # This function allows us to find the nth public key, as long as n is
 #  non-negative. If n is negative, we need the master private key to find it.
 def CKD_pub(cK, c, n):
-    if n & BIP32_PRIME: raise BaseException('No prime')
+    if n & BIP32_PRIME: raise Exception('No prime')
     return _CKD_pub(cK, c, bfh(rev_hex(int_to_hex(n,4))))
 
 # helper function, callable with arbitrary string
