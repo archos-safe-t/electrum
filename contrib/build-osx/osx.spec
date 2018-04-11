@@ -6,7 +6,7 @@ import sys
 import os
 
 PACKAGE='ElectrumG'
-PYPKG='electrumg'
+PYPKG='electrum'
 MAIN_SCRIPT='electrumg'
 ICONS_FILE='electrumg.icns'
 
