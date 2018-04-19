@@ -65,6 +65,7 @@ class HistoryList(MyTreeWidget, AcceptFileDragDrop):
         self.end_timestamp = None
         self.years = []
         self.create_toolbar_buttons()
+        self.wallet = None
 
     def format_date(self, d):
         return str(datetime.date(d.year, d.month, d.day)) if d else _('None')
@@ -173,11 +174,13 @@ class HistoryList(MyTreeWidget, AcceptFileDragDrop):
         grid = QGridLayout()
         grid.addWidget(QLabel(_("Start")), 0, 0)
         grid.addWidget(QLabel(self.format_date(start_date)), 0, 1)
-        grid.addWidget(QLabel(_("End")), 1, 0)
-        grid.addWidget(QLabel(self.format_date(end_date)), 1, 1)
-        grid.addWidget(QLabel(_("Initial balance")), 2, 0)
-        grid.addWidget(QLabel(format_amount(h['start_balance'])), 2, 1)
-        grid.addWidget(QLabel(str(h.get('start_fiat_balance'))), 2, 2)
+        grid.addWidget(QLabel(str(h['start_fiat_value']) + '/BTC'), 0, 2)
+        grid.addWidget(QLabel(_("Initial balance")), 1, 0)
+        grid.addWidget(QLabel(format_amount(h['start_balance'])), 1, 1)
+        grid.addWidget(QLabel(str(h.get('start_fiat_balance'))), 1, 2)
+        grid.addWidget(QLabel(_("End")), 2, 0)
+        grid.addWidget(QLabel(self.format_date(end_date)), 2, 1)
+        grid.addWidget(QLabel(str(h['end_fiat_value']) + '/BTC'), 2, 2)
         grid.addWidget(QLabel(_("Final balance")), 4, 0)
         grid.addWidget(QLabel(format_amount(h['end_balance'])), 4, 1)
         grid.addWidget(QLabel(str(h.get('end_fiat_balance'))), 4, 2)
@@ -301,6 +304,8 @@ class HistoryList(MyTreeWidget, AcceptFileDragDrop):
             item.setText(3, label)
 
     def update_item(self, tx_hash, height, conf, timestamp):
+        if self.wallet is None:
+            return
         status, status_str = self.wallet.get_tx_status(tx_hash, height, conf, timestamp)
         icon = self.icon_cache.get(":icons/" +  TX_ICONS[status])
         items = self.findItems(tx_hash, Qt.UserRole|Qt.MatchContains|Qt.MatchRecursive, column=1)

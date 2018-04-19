@@ -520,7 +520,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         tools_menu = menubar.addMenu(_("&Tools"))
 
-        # Settings / Preferences are all reserved keywords in OSX using this as work around
+        # Settings / Preferences are all reserved keywords in macOS using this as work around
         tools_menu.addAction(_("ElectrumG preferences") if sys.platform == 'darwin' else _("Preferences"), self.settings_dialog)
         tools_menu.addAction(_("&Network"), lambda: self.gui_object.show_network_dialog(self))
         tools_menu.addAction(_("&Plugins"), self.plugins_dialog)
@@ -797,7 +797,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         msg = _('BitcoinGold address where the payment should be received. Note that each payment request uses a different BitcoinGold address.')
         self.receive_address_label = HelpLabel(_('Receiving address'), msg)
         self.receive_address_e.textChanged.connect(self.update_receive_qr)
-        self.receive_address_e.setFocusPolicy(Qt.NoFocus)
+        self.receive_address_e.setFocusPolicy(Qt.ClickFocus)
         grid.addWidget(self.receive_address_label, 0, 0)
         grid.addWidget(self.receive_address_e, 0, 1, 1, -1)
 
@@ -2388,7 +2388,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         if isinstance(self.wallet, Multisig_Wallet):
             self.show_message(_('WARNING: This is a multi-signature wallet.') + '\n' +
-                              _('It can not be "backed up" by simply exporting these private keys.'))
+                              _('It cannot be "backed up" by simply exporting these private keys.'))
 
         d = WindowModalDialog(self, _('Private keys'))
         d.setMinimumSize(980, 300)
@@ -2724,9 +2724,9 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         id_widgets.append((SSL_id_label, SSL_id_e))
 
         units = ['BTG', 'mBTG', 'bits']
-        msg = _('Base unit of your wallet.')\
-              + '\n1BTG=1000mBTG.\n' \
-              + _(' These settings affects the fields in the Send tab')+' '
+        msg = (_('Base unit of your wallet.')
+               + '\n1 BTG = 1000 mBTG. 1 mBTG = 1000 bits.\n'
+               + _('This setting affects the Send tab, and all balance related fields.'))
         unit_label = HelpLabel(_('Base unit') + ':', msg)
         unit_combo = QComboBox()
         unit_combo.addItems(units)

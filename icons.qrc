@@ -25,6 +25,8 @@
     <file>icons/microphone.png</file>
     <file>icons/network.png</file>
     <file>icons/offline_tx.png</file>
+    <file>icons/revealer.png</file>
+    <file>icons/revealer_c.png</file>
     <file>icons/qrcode.png</file>
     <file>icons/qrcode_white.png</file>
     <file>icons/preferences.png</file>
