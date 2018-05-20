@@ -382,7 +382,7 @@ class Blockchain(util.PrintError):
         data = bfh(ser_header)
         length = len(data)
 
-        assert delta == self.get_branch_size()
+        assert delta == self.size()
         assert length == header_size
         self.write(data, offset)
 
@@ -511,7 +511,7 @@ class Blockchain(util.PrintError):
 
         # Special testnet handling
         if constants.net.REGTEST:
-            new_target = self.get_target(height - 1)
+            new_target = self.bits_to_target(last.get('bits'))
         elif constants.net.TESTNET and cur.get('timestamp') > last.get('timestamp') + constants.net.POW_TARGET_SPACING * 2:
             new_target = constants.net.POW_LIMIT
         else:
