@@ -27,6 +27,8 @@ import os
 import json
 from sys import maxsize
 
+from equihash_params import EquihashParams
+
 GIT_REPO_URL = "https://github.com/BTCGPU/electrum"
 GIT_ISSUE_URL = GIT_REPO_URL + "/issues"
 
@@ -47,14 +49,13 @@ class BitcoinGoldBase(object):
 
     DEFAULT_PORTS = {'t': '50001', 's': '50002'}
 
-    HEADER_SIZE = 1487
     HEADER_SIZE_LEGACY = 141
 
     HEADERS_URL = None
     CHECKPOINTS = []
 
-    EQUIHASH_N = 200
-    EQUIHASH_K = 9
+    EQUIHASH_PARAMS = EquihashParams(n=200, k=9)
+    EQUIHASH_PARAMS_FORK = EquihashParams(n=144, k=5)
 
     POW_TARGET_SPACING = 10 * 60
     POW_TARGET_TIMESPAN_LEGACY = 14 * 24 * 60 * 60
@@ -82,6 +83,7 @@ class BitcoinGoldMainnet(BitcoinGoldBase):
     CHECKPOINTS = read_json('checkpoints.json', [])
 
     BTG_HEIGHT = 491407
+    EQUIHASH_FORK_HEIGHT = maxsize
     LWMA_HEIGHT = maxsize
     PREMINE_SIZE = 8000
 
@@ -120,6 +122,7 @@ class BitcoinGoldTestnet(BitcoinGoldBase):
     DEFAULT_SERVERS = read_json('servers_testnet.json', {})
 
     BTG_HEIGHT = 1
+    EQUIHASH_FORK_HEIGHT = maxsize
     LWMA_HEIGHT = -1
     PREMINE_SIZE = 50
 
@@ -157,13 +160,12 @@ class BitcoinGoldRegtest(BitcoinGoldBase):
     DEFAULT_SERVERS = read_json('servers_regtest.json', {})
 
     BTG_HEIGHT = 2000
+    EQUIHASH_FORK_HEIGHT = 2001
     LWMA_HEIGHT = -1
     PREMINE_SIZE = 10
 
-    HEADER_SIZE = 177
-
-    EQUIHASH_N = 48
-    EQUIHASH_K = 5
+    EQUIHASH_PARAMS = EquihashParams(n=48, k=5)
+    EQUIHASH_PARAMS_FORK = EquihashParams(n=96, k=5)
 
     POW_LIMIT = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
     POW_LIMIT_START = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
