@@ -458,6 +458,10 @@ def parse_input(vds):
         else:
             d['scriptSig'] = ''
 
+        if not Transaction.is_txin_complete(d):
+            d['value'] = vds.read_uint64()
+
+
     return d
 
 
@@ -850,13 +854,17 @@ class Transaction:
         return prevout_hash + ':%d' % prevout_n
 
     @classmethod
-    def serialize_input(cls, txin, script):
+    def serialize_input(cls, txin, script, estimate_size=False):
         # Prev hash and index
         s = cls.serialize_outpoint(txin)
         # Script length, script, sequence
         s += var_int(len(script)//2)
         s += script
         s += int_to_hex(txin.get('sequence', 0xffffffff - 1), 4)
+        # offline signing needs to know the input value
+        if ('value' in txin   # Legacy txs
+            and not (estimate_size or cls.is_txin_complete(txin))):
+            s += int_to_hex(txin['value'], 8)
         return s
 
     def set_rbf(self, rbf):
