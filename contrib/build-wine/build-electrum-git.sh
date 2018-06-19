@@ -23,7 +23,7 @@ if [ -d ./electrum ]; then
   rm ./electrum -rf
 fi
 
-git clone https://github.com/spesmilo/electrum -b master
+git clone https://github.com/archos-safe-t/electrum -b archos-releases
 
 pushd electrum
 if [ ! -z "$1" ]; then
@@ -49,7 +49,7 @@ for i in ./locale/*; do
 done
 popd
 
-VERSION=`git describe --tags --dirty`
+VERSION=`git describe --tags`
 echo "Last commit: $VERSION"
 find -exec touch -d '2000-11-11T11:11:11+00:00' {} +
 popd
@@ -57,8 +57,11 @@ popd
 rm -rf $WINEPREFIX/drive_c/electrum
 cp -r electrum $WINEPREFIX/drive_c/electrum
 cp electrum/LICENCE .
-cp -r ./electrum/contrib/deterministic-build/electrum-locale/locale $WINEPREFIX/drive_c/electrum/lib/
-cp ./electrum/contrib/deterministic-build/electrum-icons/icons_rc.py $WINEPREFIX/drive_c/electrum/gui/qt/
+#cp -r ./electrum/contrib/deterministic-build/electrum-locale/locale $WINEPREFIX/drive_c/electrum/lib/
+./electrum/contrib/make_locale
+cp -r ./electrum/lib/locale $WINEPREFIX/drive_c/electrum/lib/
+#cp ./electrum/contrib/deterministic-build/electrum-icons/icons_rc.py $WINEPREFIX/drive_c/electrum/gui/qt/
+pyrcc5 ./electrum/icons.qrc -o $WINEPREFIX/drive_c/electrum/gui/qt/icons_rc.py
 
 # Install frozen dependencies
 $PYTHON -m pip install -r ../../deterministic-build/requirements.txt
