@@ -289,8 +289,8 @@ def gbp_validate(digest, minimal, n, k):
     return True
 
 
-def zcash_person(n, k):
-    return b'ZcashPoW' + struct.pack('<II', n, k)
+def zcash_person(n, k, personalization):
+    return personalization + struct.pack('<II', n, k)
 
 
 def print_hash(h):
@@ -309,9 +309,10 @@ def validate_params(n, k):
 
 # a bit different from https://github.com/zcash/zcash/blob/master/qa/rpc-tests/test_framework/mininode.py#L747
 # since electrum is a SPV oriented and not a node
-def is_gbp_valid(header, nNonce, nSolution, n=48, k=5):
+def is_gbp_valid(header, nonce, solution, equihash_params):
     # H(I||...
-    digest = blake2b(digest_size=(512//n)*n//8, person=zcash_person(n, k))
+    digest = blake2b(digest_size=(512//equihash_params.n)*equihash_params.n//8,
+                     person=zcash_person(equihash_params.n, equihash_params.k, equihash_params.personalization))
     digest.update(header[:108])
-    hash_nonce(digest, nNonce)
-    return gbp_validate(digest, nSolution, n, k)
+    hash_nonce(digest, nonce)
+    return gbp_validate(digest, solution, equihash_params.n, equihash_params.k)
