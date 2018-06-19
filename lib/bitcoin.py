@@ -51,12 +51,16 @@ def max_actual_timespan():
     return (averaging_window_timespan() * (100 + constants.net.DIGI_MAX_ADJUST_DOWN)) // 100
 
 
-def is_postfork(height):
+def is_post_btg_fork(height):
     return height >= constants.net.BTG_HEIGHT
 
 
+def is_post_equihash_fork(height):
+    return height >= constants.net.EQUIHASH_FORK_HEIGHT
+
+
 def needs_retarget(height):
-    return is_postfork(height) or (height % difficulty_adjustment_interval() == 0)
+    return is_post_btg_fork(height) or (height % difficulty_adjustment_interval() == 0)
 
 
 def difficulty_adjustment_interval():
@@ -64,8 +68,19 @@ def difficulty_adjustment_interval():
 
 
 def get_header_size(height):
-    return constants.net.HEADER_SIZE if height >= constants.net.BTG_HEIGHT \
-        else constants.net.HEADER_SIZE_LEGACY
+    size = constants.net.HEADER_SIZE_LEGACY
+
+    if is_post_btg_fork(height):
+        solution_size = get_equihash_params(height).get_solution_size()
+        solution_size_compact = len(var_int(solution_size)) // 2 - 1
+        size += solution_size_compact + solution_size
+
+    return size
+
+
+def get_equihash_params(height):
+    return constants.net.EQUIHASH_PARAMS if height < constants.net.EQUIHASH_FORK_HEIGHT \
+        else constants.net.EQUIHASH_PARAMS_FORK
 
 
 def hex_to_int(s):
@@ -191,14 +206,14 @@ def int_to_hex(i, length=1):
 
 def var_int(i):
     # https://en.bitcoin.it/wiki/Protocol_specification#Variable_length_integer
-    if i<0xfd:
+    if i < 0xfd:
         return int_to_hex(i)
-    elif i<=0xffff:
-        return "fd"+int_to_hex(i,2)
-    elif i<=0xffffffff:
-        return "fe"+int_to_hex(i,4)
+    elif i <= 0xffff:
+        return "fd"+int_to_hex(i, 2)
+    elif i <= 0xffffffff:
+        return "fe"+int_to_hex(i, 4)
     else:
-        return "ff"+int_to_hex(i,8)
+        return "ff"+int_to_hex(i, 8)
 
 
 def var_int_read(value, start):
