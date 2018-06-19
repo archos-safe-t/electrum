@@ -458,6 +458,10 @@ def parse_input(vds):
         else:
             d['scriptSig'] = ''
 
+        if not Transaction.is_txin_complete(d):
+            d['value'] = vds.read_uint64()
+
+
     return d
 
 
@@ -554,8 +558,6 @@ def deserialize(raw):
 
 # pay & redeem scripts
 
-
-
 def multisig_script(public_keys, m):
     n = len(public_keys)
     assert n <= 15
@@ -564,8 +566,6 @@ def multisig_script(public_keys, m):
     op_n = format(opcodes.OP_1 + n - 1, 'x')
     keylist = [op_push(len(k)//2) + k for k in public_keys]
     return op_m + ''.join(keylist) + op_n + 'ae'
-
-
 
 
 class Transaction:
@@ -850,13 +850,17 @@ class Transaction:
         return prevout_hash + ':%d' % prevout_n
 
     @classmethod
-    def serialize_input(cls, txin, script):
+    def serialize_input(cls, txin, script, estimate_size=False):
         # Prev hash and index
         s = cls.serialize_outpoint(txin)
         # Script length, script, sequence
         s += var_int(len(script)//2)
         s += script
         s += int_to_hex(txin.get('sequence', 0xffffffff - 1), 4)
+        # offline signing needs to know the input value
+        if ('value' in txin   # Legacy txs
+            and not (estimate_size or cls.is_txin_complete(txin))):
+            s += int_to_hex(txin['value'], 8)
         return s
 
     def set_rbf(self, rbf):
