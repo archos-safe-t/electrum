@@ -71,7 +71,9 @@ def get_header_size(height):
     size = constants.net.HEADER_SIZE_LEGACY
 
     if is_post_btg_fork(height):
-        size += get_equihash_params(height).get_solution_size()
+        solution_size = get_equihash_params(height).get_solution_size()
+        solution_size_compact = len(var_int(solution_size)) // 2 - 1
+        size += solution_size_compact + solution_size
 
     return size
 
@@ -204,14 +206,14 @@ def int_to_hex(i, length=1):
 
 def var_int(i):
     # https://en.bitcoin.it/wiki/Protocol_specification#Variable_length_integer
-    if i<0xfd:
+    if i < 0xfd:
         return int_to_hex(i)
-    elif i<=0xffff:
-        return "fd"+int_to_hex(i,2)
-    elif i<=0xffffffff:
-        return "fe"+int_to_hex(i,4)
+    elif i <= 0xffff:
+        return "fd"+int_to_hex(i, 2)
+    elif i <= 0xffffffff:
+        return "fe"+int_to_hex(i, 4)
     else:
-        return "ff"+int_to_hex(i,8)
+        return "ff"+int_to_hex(i, 8)
 
 
 def var_int_read(value, start):

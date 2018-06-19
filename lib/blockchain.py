@@ -264,7 +264,7 @@ class Blockchain(util.PrintError):
 
             params = get_equihash_params(block_height)
 
-            if not is_gbp_valid(header_bytes, nonce, solution, params.n, params.k):
+            if not is_gbp_valid(header_bytes, nonce, solution, params):
                 raise Exception("Invalid equihash solution")
 
     def verify_chunk(self, height, data):
@@ -463,15 +463,32 @@ class Blockchain(util.PrintError):
         # Premine
         elif height < constants.net.BTG_HEIGHT + constants.net.PREMINE_SIZE:
             new_target = constants.net.POW_LIMIT
-        # Initial start (reduced difficulty)
+        # Initial start of BTG Fork (reduced difficulty)
         elif height < constants.net.BTG_HEIGHT + constants.net.PREMINE_SIZE + constants.net.DIGI_AVERAGING_WINDOW:
             new_target = constants.net.POW_LIMIT_START
         # Digishield
         elif height < constants.net.LWMA_HEIGHT:
             new_target = self.get_digishield_target(height, headers)
-        # Zawy LWMA
+        # Zawy LWMA (old)
+        elif height < constants.net.EQUIHASH_FORK_HEIGHT:
+            new_target = self.get_lwma_target(height, headers, constants.net.LWMA_ADJUST_WEIGHT_LEGACY,
+                                              constants.net.LWMA_MIN_DENOMINATOR_LEGACY)
+        # Initial start of BTG Equihash Fork (reduced difficulty)
+        elif height < constants.net.EQUIHASH_FORK_HEIGHT + constants.net.LWMA_AVERAGING_WINDOW:
+            last = self.get_header((height - 1), headers)
+            bits = last.get('bits')
+            new_target = self.bits_to_target(bits)
+
+            if height == constants.net.EQUIHASH_FORK_HEIGHT:
+                # reduce diff
+                new_target *= 100
+
+                if new_target > constants.net.POW_LIMIT:
+                    new_target = constants.net.POW_LIMIT
+        # Zawy LWMA (new)
         else:
-            new_target = self.get_lwma_target(height, headers)
+            new_target = self.get_lwma_target(height, headers, constants.net.LWMA_ADJUST_WEIGHT,
+                                              constants.net.LWMA_MIN_DENOMINATOR)
 
         return new_target
 
@@ -507,7 +524,7 @@ class Blockchain(util.PrintError):
             target = self.bits_to_target(last.get('bits'))
 
             actual_timespan = last.get('timestamp') - first.get('timestamp')
-            target_timespan = 14 * 24 * 60 * 60
+            target_timespan = constants.net.POW_TARGET_TIMESPAN_LEGACY
             actual_timespan = max(actual_timespan, target_timespan // 4)
             actual_timespan = min(actual_timespan, target_timespan * 4)
 
@@ -515,7 +532,7 @@ class Blockchain(util.PrintError):
 
         return new_target
 
-    def get_lwma_target(self, height, headers):
+    def get_lwma_target(self, height, headers, weight, denominator):
         cur = self.get_header(height, headers)
         last_height = (height - 1)
         last = self.get_header(last_height, headers)
@@ -532,6 +549,8 @@ class Blockchain(util.PrintError):
 
             assert (height - constants.net.LWMA_AVERAGING_WINDOW) > 0
 
+            ts = 6 * constants.net.POW_TARGET_SPACING
+
             # Loop through N most recent blocks.  "< height", not "<=".
             # height-1 = most recently solved block
             for i in range(height - constants.net.LWMA_AVERAGING_WINDOW, height):
@@ -541,13 +560,16 @@ class Blockchain(util.PrintError):
 
                 solvetime = cur.get('timestamp') - prev.get('timestamp')
 
+                if constants.net.LWMA_SOLVETIME_LIMITATION and solvetime > ts:
+                    solvetime = ts
+
                 j += 1
                 t += solvetime * j
-                total += self.bits_to_target(cur.get('bits')) // (constants.net.LWMA_ADJUST_WEIGHT * constants.net.LWMA_AVERAGING_WINDOW * constants.net.LWMA_AVERAGING_WINDOW)
+                total += self.bits_to_target(cur.get('bits')) // (weight * constants.net.LWMA_AVERAGING_WINDOW * constants.net.LWMA_AVERAGING_WINDOW)
 
             # Keep t reasonable in case strange solvetimes occurred.
-            if t < constants.net.LWMA_AVERAGING_WINDOW * constants.net.LWMA_ADJUST_WEIGHT // 3:
-                t = constants.net.LWMA_AVERAGING_WINDOW * constants.net.LWMA_ADJUST_WEIGHT // 3
+            if t < constants.net.LWMA_AVERAGING_WINDOW * weight // denominator:
+                t = constants.net.LWMA_AVERAGING_WINDOW * weight // denominator
 
             new_target = t * total
 

@@ -25,9 +25,10 @@
 
 
 class EquihashParams(object):
-    def __init__(self, n, k):
+    def __init__(self, n, k, personalization):
         self.n = n
         self.k = k
+        self.personalization = personalization
 
     def get_solution_size(self):
         return int((1 << self.k) * (self.n / (self.k + 1) + 1) / 8)
