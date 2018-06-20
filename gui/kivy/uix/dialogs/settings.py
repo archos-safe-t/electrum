@@ -36,9 +36,8 @@ Builder.load_string('''
                     action: partial(root.language_dialog, self)
                 CardSeparator
                 SettingsItem:
-                    status: '' if root.disable_pin else ('ON' if root.use_encryption else 'OFF')
                     disabled: root.disable_pin
-                    title: _('PIN code') + ': ' + self.status
+                    title: _('PIN code')
                     description: _("Change your PIN code.")
                     action: partial(root.change_password, self)
                 CardSeparator
@@ -66,7 +65,7 @@ Builder.load_string('''
                     description: _("Create replaceable transactions.")
                     message:
                         _('If you check this box, your transactions will be marked as non-final,') \
-                        + ' ' + _('and you will have the possiblity, while they are unconfirmed, to replace them with transactions that pays higher fees.') \
+                        + ' ' + _('and you will have the possibility, while they are unconfirmed, to replace them with transactions that pays higher fees.') \
                         + ' ' + _('Note that some merchants do not accept non-final transactions until they are confirmed.')
                     action: partial(root.boolean_dialog, 'use_rbf', _('Replace by fee'), self.message)
                 CardSeparator

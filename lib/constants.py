@@ -50,6 +50,7 @@ class BitcoinGoldBase(object):
     HEADER_SIZE = 1487
     HEADER_SIZE_LEGACY = 141
 
+    HEADERS_URL = None
     CHECKPOINTS = []
 
     EQUIHASH_N = 200
@@ -74,7 +75,7 @@ class BitcoinGoldMainnet(BitcoinGoldBase):
     ADDRTYPE_P2SH = 23
     SEGWIT_HRP = "btg"
 
-    HEADERS_URL = "https://headers.bitcoingold.org/blockchain_headers"
+    HEADERS_URL = "https://headers.bitcoingold.org/blockchain_headers.gz"
     GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
 
     DEFAULT_SERVERS = read_json('servers.json', {})
@@ -113,7 +114,6 @@ class BitcoinGoldTestnet(BitcoinGoldBase):
     ADDRTYPE_P2SH = 196
     SEGWIT_HRP = "tbtg"
 
-    HEADERS_URL = "https://headers.bitcoingold.org/testnet_headers"
     GENESIS = "00000000e0781ebe24b91eedc293adfea2f557b53ec379e78959de3853e6f9f6"
 
     DEFAULT_PORTS = {'t': '51001', 's': '51002'}
@@ -138,7 +138,7 @@ class BitcoinGoldTestnet(BitcoinGoldBase):
     XPUB_HEADERS = {
         'standard': 0x043587cf,     # tpub
         'p2wpkh-p2sh': 0x044a5262,  # upub
-        'p2wsh-p2sh': 0x024285ef,   # Upub
+        'p2wsh-p2sh': 0x024289ef,   # Upub
         'p2wpkh': 0x045f1cf6,       # vpub
         'p2wsh': 0x02575483,        # Vpub
     }
@@ -152,7 +152,6 @@ class BitcoinGoldRegtest(BitcoinGoldBase):
     ADDRTYPE_P2SH = 196
     SEGWIT_HRP = "tbtg"
 
-    HEADERS_URL = None
     GENESIS = "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
 
     DEFAULT_SERVERS = read_json('servers_regtest.json', {})
@@ -181,7 +180,7 @@ class BitcoinGoldRegtest(BitcoinGoldBase):
     XPUB_HEADERS = {
         'standard': 0x043587cf,     # tpub
         'p2wpkh-p2sh': 0x044a5262,  # upub
-        'p2wsh-p2sh': 0x024285ef,   # Upub
+        'p2wsh-p2sh': 0x024289ef,   # Upub
         'p2wpkh': 0x045f1cf6,       # vpub
         'p2wsh': 0x02575483,        # Vpub
     }

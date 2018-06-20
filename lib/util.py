@@ -26,15 +26,14 @@ from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
 import traceback
-import urllib
 import threading
 import hmac
 
 from .i18n import _
 
-
 import urllib.request, urllib.parse, urllib.error
 import queue
+
 
 def inv_dict(d):
     return {v: k for k, v in d.items()}
@@ -391,9 +390,6 @@ def bh2u(x):
     return hfu(x).decode('ascii')
 
 
-class CompactError(Exception):
-    """ Thrown when there's a problem with compact size """
-
 def user_dir():
     if 'ANDROID_DATA' in os.environ:
         return android_check_data_dir()
@@ -421,7 +417,7 @@ def format_satoshis(x, is_diff=False, num_zeros = 0, decimal_point = 8, whitespa
         return 'unknown'
     x = int(x)  # Some callers pass Decimal
     scale_factor = pow (10, decimal_point)
-    integer_part = "{:n}".format(int(abs(x) / scale_factor))
+    integer_part = "{:d}".format(int(abs(x) / scale_factor))
     if x < 0:
         integer_part = '-' + integer_part
     elif is_diff:
@@ -545,12 +541,12 @@ def parse_URI(uri, on_pr=None):
 
     if ':' not in uri:
         if not bitcoin.is_address(uri):
-            raise BaseException("Not a BitcoinGold address")
+            raise Exception("Not a BitcoinGold address")
         return {'address': uri}
 
     u = urllib.parse.urlparse(uri)
     if u.scheme != 'bitcoingold':
-        raise BaseException("Not a BitcoinGold URI")
+        raise Exception("Not a BitcoinGold URI")
     address = u.path
 
     # python for android fails to parse query
@@ -567,7 +563,7 @@ def parse_URI(uri, on_pr=None):
     out = {k: v[0] for k, v in pq.items()}
     if address:
         if not bitcoin.is_address(address):
-            raise BaseException("Invalid BitcoinGold address:" + address)
+            raise Exception("Invalid BitcoinGold address:" + address)
         out['address'] = address
     if 'amount' in out:
         am = out['amount']
@@ -716,10 +712,6 @@ class SocketPipe:
                 print_error("SSLError:", e)
                 time.sleep(0.1)
                 continue
-            except OSError as e:
-                print_error("OSError", e)
-                time.sleep(0.1)
-                continue
 
 
 class QueuePipe:
@@ -790,7 +782,7 @@ def versiontuple(v):
 
 def import_meta(path, validater, load_meta):
     try:
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             d = validater(json.loads(f.read()))
         load_meta(d)
     #backwards compatibility for JSONDecodeError
@@ -804,8 +796,24 @@ def import_meta(path, validater, load_meta):
 
 def export_meta(meta, fileName):
     try:
-        with open(fileName, 'w+') as f:
+        with open(fileName, 'w+', encoding='utf-8') as f:
             json.dump(meta, f, indent=4, sort_keys=True)
     except (IOError, os.error) as e:
         traceback.print_exc(file=sys.stderr)
         raise FileExportFailed(e)
+
+
+def download_bootstrap(url, dest_file):
+    import tempfile
+    # Download
+    headers = {'User-Agent': "Mozilla/5.0 (X11; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0"}
+    req = urllib.request.Request(url, headers=headers)
+
+    with urllib.request.urlopen(req) as response, tempfile.NamedTemporaryFile() as src_file:
+        import shutil
+        shutil.copyfileobj(response, src_file)
+
+        # Decompress
+        import gzip
+        with gzip.GzipFile(src_file.name, 'rb') as in_file, open(dest_file, 'wb+') as out_file:
+            out_file.write(in_file.read())

@@ -83,6 +83,8 @@ def serialize_header(header, legacy=False):
 
 
 def deserialize_header(header, height):
+    if not header:
+        raise Exception('Invalid header: {}'.format(header))
     h = dict(
         block_height=height,
         version=hex_to_int(header[0:4]),
@@ -229,18 +231,13 @@ class Blockchain(util.PrintError):
         block_height = header.get('block_height')
 
         if prev_hash != header.get('prev_block_hash'):
-            raise BaseException("prev hash mismatch: %s vs %s" % (prev_hash, header.get('prev_block_hash')))
-        #if constants.net.TESTNET:
-        #    return
+            raise Exception("prev hash mismatch: %s vs %s" % (prev_hash, header.get('prev_block_hash')))
         bits = self.target_to_bits(target)
         if bits != header.get('bits'):
-            raise BaseException("bits mismatch: %s vs %s" % (bits, header.get('bits')))
+            raise Exception("bits mismatch: %s vs %s" % (bits, header.get('bits')))
         _hash = hash_header(header, block_height)
         if int('0x' + _hash, 16) > target:
-            raise BaseException("insufficient proof of work: %s vs target %s" % (int('0x' + _hash, 16), target))
-        #_powhash = uint256_from_bytes(Hash(bfh(serialize_header(header))))
-        #if _powhash > target:
-        #    raise BaseException("insufficient proof of work: %s vs target %s" % (int('0x' + _powhash, 16), target))
+            raise Exception("insufficient proof of work: %s vs target %s" % (int('0x' + _hash, 16), target))
         if is_postfork(block_height):
             header_bytes = bytes.fromhex(serialize_header(header))
             nonce = uint256_from_bytes(bfh(header.get('nonce'))[::-1])
@@ -249,7 +246,7 @@ class Blockchain(util.PrintError):
             solution = solution[offset:]
 
             if not is_gbp_valid(header_bytes, nonce, solution, constants.net.EQUIHASH_N, constants.net.EQUIHASH_K):
-                raise BaseException("Invalid equihash solution")
+                raise Exception("Invalid equihash solution")
 
     def verify_chunk(self, height, data):
         size = len(data)
@@ -385,7 +382,7 @@ class Blockchain(util.PrintError):
         data = bfh(ser_header)
         length = len(data)
 
-        assert delta == self.get_branch_size()
+        assert delta == self.size()
         assert length == header_size
         self.write(data, offset)
 
@@ -410,13 +407,13 @@ class Blockchain(util.PrintError):
                 return f.read(header_size)
 
             h = read_file(name, get_header, self.lock)
+            if len(h) < header_size:
+                raise Exception('Expected to read a full header. This was only {} bytes'.format(len(h)))
         elif not os.path.exists(util.get_headers_dir(self.config)):
             raise Exception('ElectrumG datadir does not exist. Was it deleted while running?')
         else:
             raise Exception('Cannot find headers file but datadir is there. Should be at {}'.format(name))
-
-
-        if len(h) != header_size or h == bytes([0])*header_size:
+        if h == bytes([0])*header_size:
             return None
         return deserialize_header(h, height)
 
@@ -514,7 +511,7 @@ class Blockchain(util.PrintError):
 
         # Special testnet handling
         if constants.net.REGTEST:
-            new_target = self.get_target(height - 1)
+            new_target = self.bits_to_target(last.get('bits'))
         elif constants.net.TESTNET and cur.get('timestamp') > last.get('timestamp') + constants.net.POW_TARGET_SPACING * 2:
             new_target = constants.net.POW_LIMIT
         else:
@@ -635,6 +632,8 @@ class Blockchain(util.PrintError):
         return c
 
     def can_connect(self, header, check_height=True):
+        if header is None:
+            return False
         height = header['block_height']
         if check_height and self.height() != height - 1:
             self.print_error("cannot connect at height", height)

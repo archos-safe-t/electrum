@@ -229,10 +229,10 @@ opcodes = Enumeration("Opcodes", [
     "OP_WITHIN", "OP_RIPEMD160", "OP_SHA1", "OP_SHA256", "OP_HASH160",
     "OP_HASH256", "OP_CODESEPARATOR", "OP_CHECKSIG", "OP_CHECKSIGVERIFY", "OP_CHECKMULTISIG",
     "OP_CHECKMULTISIGVERIFY",
-    ("OP_SINGLEBYTE_END", 0xF0),
-    ("OP_DOUBLEBYTE_BEGIN", 0xF000),
-    "OP_PUBKEY", "OP_PUBKEYHASH",
-    ("OP_INVALIDOPCODE", 0xFFFF),
+    ("OP_NOP1", 0xB0),
+    ("OP_CHECKLOCKTIMEVERIFY", 0xB1), ("OP_CHECKSEQUENCEVERIFY", 0xB2),
+    "OP_NOP4", "OP_NOP5", "OP_NOP6", "OP_NOP7", "OP_NOP8", "OP_NOP9", "OP_NOP10",
+    ("OP_INVALIDOPCODE", 0xFF),
 ])
 
 
@@ -242,10 +242,6 @@ def script_GetOp(_bytes):
         vch = None
         opcode = _bytes[i]
         i += 1
-        if opcode >= opcodes.OP_SINGLEBYTE_END:
-            opcode <<= 8
-            opcode |= _bytes[i]
-            i += 1
 
         if opcode <= opcodes.OP_PUSHDATA4:
             nSize = opcode
@@ -546,7 +542,8 @@ def deserialize(raw):
     is_segwit = (n_vin == 0)
     if is_segwit:
         marker = vds.read_bytes(1)
-        assert marker == b'\x01'
+        if marker != b'\x01':
+            raise ValueError('invalid txn marker byte: {}'.format(marker))
         n_vin = vds.read_compact_size()
     d['inputs'] = [parse_input(vds) for i in range(n_vin)]
     n_vout = vds.read_compact_size()
@@ -590,7 +587,7 @@ class Transaction:
         elif isinstance(raw, dict):
             self.raw = raw['hex']
         else:
-            raise BaseException("cannot initialize transaction", raw)
+            raise Exception("cannot initialize transaction", raw)
         self._inputs = None
         self._outputs = None
         self.locktime = 0
@@ -612,7 +609,7 @@ class Transaction:
         return self._outputs
 
     @classmethod
-    def get_sorted_pubkeys(self, txin):
+    def get_sorted_pubkeys(cls, txin):
         # sort pubkeys and x_pubkeys, using the order of pubkeys
         if txin['type'] == 'coinbase':
             return [], []
@@ -668,15 +665,15 @@ class Transaction:
         return d
 
     @classmethod
-    def from_io(klass, inputs, outputs, locktime=0):
-        self = klass(None)
+    def from_io(cls, inputs, outputs, locktime=0):
+        self = cls(None)
         self._inputs = inputs
         self._outputs = outputs
         self.locktime = locktime
         return self
 
     @classmethod
-    def pay_script(self, output_type, addr):
+    def pay_script(cls, output_type, addr):
         if output_type == TYPE_SCRIPT:
             return addr
         elif output_type == TYPE_ADDRESS:
@@ -713,19 +710,19 @@ class Transaction:
             return 0x21  # just guess it is compressed
 
     @classmethod
-    def get_siglist(self, txin, estimate_size=False):
+    def get_siglist(cls, txin, estimate_size=False):
         # if we have enough signatures, we use the actual pubkeys
         # otherwise, use extended pubkeys (with bip32 derivation)
         if txin['type'] == 'coinbase':
             return [], []
         num_sig = txin.get('num_sig', 1)
         if estimate_size:
-            pubkey_size = self.estimate_pubkey_size_for_txin(txin)
+            pubkey_size = cls.estimate_pubkey_size_for_txin(txin)
             pk_list = ["00" * pubkey_size] * len(txin.get('x_pubkeys', [None]))
             # we assume that signature will be 0x48 bytes long
             sig_list = [ "00" * 0x48 ] * num_sig
         else:
-            pubkeys, x_pubkeys = self.get_sorted_pubkeys(txin)
+            pubkeys, x_pubkeys = cls.get_sorted_pubkeys(txin)
             x_signatures = txin['signatures']
             signatures = list(filter(None, x_signatures))
             is_complete = len(signatures) == num_sig
@@ -738,12 +735,12 @@ class Transaction:
         return pk_list, sig_list
 
     @classmethod
-    def serialize_witness(self, txin, estimate_size=False):
-        if not self.is_segwit_input(txin):
+    def serialize_witness(cls, txin, estimate_size=False):
+        if not cls.is_segwit_input(txin):
             return '00'
         if txin['type'] == 'coinbase':
             return txin['witness']
-        pubkeys, sig_list = self.get_siglist(txin, estimate_size)
+        pubkeys, sig_list = cls.get_siglist(txin, estimate_size)
         add_w = lambda x: var_int(len(x) // 2) + x
         if txin['type'] in ['p2wpkh', 'p2wpkh-p2sh']:
             witness = var_int(2) + add_w(sig_list[0]) + add_w(pubkeys[0])
@@ -754,8 +751,8 @@ class Transaction:
         else:
             witness = txin.get('witness', None)
             if not witness:
-                raise BaseException('wrong txin type:', txin['type'])
-        if self.is_txin_complete(txin) or estimate_size:
+                raise Exception('wrong txin type:', txin['type'])
+        if cls.is_txin_complete(txin) or estimate_size:
             value_field = ''
         else:
             value_field = var_int(0xffffffff) + int_to_hex(txin['value'], 8)
@@ -771,24 +768,27 @@ class Transaction:
         return txin_type in ('p2wpkh', 'p2wpkh-p2sh', 'p2wsh', 'p2wsh-p2sh')
 
     @classmethod
-    def is_bip143_input(self, txin):
-        # return self.is_segwit_input(txin)
+    def is_bip143_input(cls, txin):
         return True
 
     @classmethod
-    def get_sighash(self):
+    def get_sighash(cls):
         return bitcoin.SIGHASH_ALL | bitcoin.SIGHASH_FORKID
 
     @classmethod
-    def get_forkid(self):
+    def get_forkid(cls):
         return 79
 
     @classmethod
-    def input_script(self, txin, estimate_size=False):
+    def get_hash_type(cls):
+        return cls.get_sighash() | (cls.get_forkid() << 8)
+
+    @classmethod
+    def input_script(cls, txin, estimate_size=False):
         _type = txin['type']
         if _type == 'coinbase':
             return txin['scriptSig']
-        pubkeys, sig_list = self.get_siglist(txin, estimate_size)
+        pubkeys, sig_list = cls.get_siglist(txin, estimate_size)
         script = ''.join(push_script(x) for x in sig_list)
         if _type == 'p2pk':
             pass
@@ -806,7 +806,7 @@ class Transaction:
             scriptSig = bitcoin.p2wpkh_nested_script(pubkey)
             return push_script(scriptSig)
         elif _type == 'p2wsh-p2sh':
-            witness_script = self.get_preimage_script(txin)
+            witness_script = cls.get_preimage_script(txin)
             scriptSig = bitcoin.p2wsh_nested_script(witness_script)
             return push_script(scriptSig)
         elif _type == 'address':
@@ -825,25 +825,24 @@ class Transaction:
         return len(signatures) == num_sig
 
     @classmethod
-    def get_preimage_script(self, txin):
-        # only for non-segwit
+    def get_preimage_script(cls, txin):
+        pubkeys, x_pubkeys = cls.get_sorted_pubkeys(txin)
         if txin['type'] == 'p2pkh':
             return bitcoin.address_to_script(txin['address'])
         elif txin['type'] in ['p2sh', 'p2wsh', 'p2wsh-p2sh']:
-            pubkeys, x_pubkeys = self.get_sorted_pubkeys(txin)
             return multisig_script(pubkeys, txin['num_sig'])
         elif txin['type'] in ['p2wpkh', 'p2wpkh-p2sh']:
-            pubkey = txin['pubkeys'][0]
+            pubkey = pubkeys[0]
             pkh = bh2u(bitcoin.hash_160(bfh(pubkey)))
             return '76a9' + push_script(pkh) + '88ac'
         elif txin['type'] == 'p2pk':
-            pubkey = txin['pubkeys'][0]
+            pubkey = pubkeys[0]
             return bitcoin.public_key_to_p2pk_script(pubkey)
         else:
             raise TypeError('Unknown txin type', txin['type'])
 
     @classmethod
-    def serialize_outpoint(self, txin):
+    def serialize_outpoint(cls, txin):
         return bh2u(bfh(txin['prevout_hash'])[::-1]) + int_to_hex(txin['prevout_n'], 4)
 
     @classmethod
@@ -855,16 +854,16 @@ class Transaction:
         return prevout_hash + ':%d' % prevout_n
 
     @classmethod
-    def serialize_input(self, txin, script, estimate_size=False):
+    def serialize_input(cls, txin, script, estimate_size=False):
         # Prev hash and index
-        s = self.serialize_outpoint(txin)
+        s = cls.serialize_outpoint(txin)
         # Script length, script, sequence
         s += var_int(len(script)//2)
         s += script
         s += int_to_hex(txin.get('sequence', 0xffffffff - 1), 4)
         # offline signing needs to know the input value
         if ('value' in txin   # Legacy txs
-            and not (estimate_size or self.is_txin_complete(txin))):
+            and not (estimate_size or cls.is_txin_complete(txin))):
             s += int_to_hex(txin['value'], 8)
         return s
 
@@ -888,7 +887,7 @@ class Transaction:
 
     def serialize_preimage(self, i):
         nVersion = int_to_hex(self.version, 4)
-        nHashType = int_to_hex(self.get_sighash() | (self.get_forkid() << 8), 4)
+        nHashType = int_to_hex(self.get_hash_type(), 4)
         nLocktime = int_to_hex(self.locktime, 4)
         inputs = self.inputs()
         outputs = self.outputs()
@@ -1058,7 +1057,8 @@ class Transaction:
                     private_key = bitcoin.MySigningKey.from_secret_exponent(secexp, curve = SECP256k1)
                     public_key = private_key.get_verifying_key()
                     sig = private_key.sign_digest_deterministic(pre_hash, hashfunc=hashlib.sha256, sigencode = ecdsa.util.sigencode_der)
-                    assert public_key.verify_digest(sig, pre_hash, sigdecode = ecdsa.util.sigdecode_der)
+                    if not public_key.verify_digest(sig, pre_hash, sigdecode = ecdsa.util.sigdecode_der):
+                        raise Exception('Sanity check verifying our own signature failed.')
                     txin['signatures'][j] = bh2u(sig) + int_to_hex(self.get_sighash(), 1)
                     #txin['x_pubkeys'][j] = pubkey
                     txin['pubkeys'][j] = pubkey # needed for fd keys

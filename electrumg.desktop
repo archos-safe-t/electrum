@@ -1,9 +1,9 @@
-# If you want electrum to appear in a linux app launcher ("start menu"), install this by doing:
+# If you want ElectrumG to appear in a Linux app launcher ("start menu"), install this by doing:
 # sudo desktop-file-install electrumg.desktop
 
 [Desktop Entry]
 Comment=Lightweight BitcoinGold Client
-Exec=electrumg %u
+Exec=sh -c "PATH=\"\\$HOME/.local/bin:\\$PATH\" electrumg %u'
 GenericName[en_US]=BitcoinGold Wallet
 GenericName=BitcoinGold Wallet
 Icon=electrumg
@@ -14,4 +14,8 @@ StartupNotify=false
 Terminal=false
 Type=Application
 MimeType=x-scheme-handler/bitcoingold;
+Actions=Testnet;
 
+[Desktop Action Testnet]
+Exec=sh -c "PATH=\"\\$HOME/.local/bin:\\$PATH\" electrumg --testnet %u'
+Name=Testnet mode

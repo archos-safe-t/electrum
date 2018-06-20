@@ -6,7 +6,7 @@ import sys
 import os
 
 PACKAGE='ElectrumG'
-PYPKG='electrumg'
+PYPKG='electrum'
 MAIN_SCRIPT='electrumg'
 ICONS_FILE='electrumg.icns'
 
@@ -15,7 +15,7 @@ for i, x in enumerate(sys.argv):
         VERSION = sys.argv[i+1]
         break
 else:
-    raise BaseException('no version')
+    raise Exception('no version')
 
 electrum = os.path.abspath(".") + "/"
 block_cipher = None
