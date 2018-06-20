@@ -558,8 +558,6 @@ def deserialize(raw):
 
 # pay & redeem scripts
 
-
-
 def multisig_script(public_keys, m):
     n = len(public_keys)
     assert n <= 15
@@ -568,8 +566,6 @@ def multisig_script(public_keys, m):
     op_n = format(opcodes.OP_1 + n - 1, 'x')
     keylist = [op_push(len(k)//2) + k for k in public_keys]
     return op_m + ''.join(keylist) + op_n + 'ae'
-
-
 
 
 class Transaction:
