@@ -27,7 +27,7 @@ import os
 import json
 from sys import maxsize
 
-from equihash_params import EquihashParams
+from .equihash_params import EquihashParams
 
 GIT_REPO_URL = "https://github.com/BTCGPU/electrum"
 GIT_ISSUE_URL = GIT_REPO_URL + "/issues"
