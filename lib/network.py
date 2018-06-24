@@ -984,7 +984,7 @@ class Network(util.DaemonThread):
                 length = len(constants.net.CHECKPOINTS) * difficulty_adjustment_interval()
                 if length > 0:
 
-                    offset, header_size = b.get_offset(length)
+                    offset, header_size = b.get_offset(0, length)
 
                     def fill_header(f):
                         if length > 0:
