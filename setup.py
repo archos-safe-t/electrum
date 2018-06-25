@@ -80,6 +80,7 @@ setup(
         'electroncash_plugins.labels',
         'electroncash_plugins.ledger',
         'electroncash_plugins.trezor',
+        'electroncash_plugins.safe_t',
         'electroncash_plugins.digitalbitbox',
         'electroncash_plugins.virtualkeyboard',
     ],
