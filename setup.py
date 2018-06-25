@@ -61,7 +61,7 @@ if platform.system() in ['Linux', 'FreeBSD', 'DragonFly']:
     ]
 
 setup(
-    name="Electron Cash",
+    name="Electron-Cash",
     version=version.PACKAGE_VERSION,
     install_requires=requirements,
     extras_require={
