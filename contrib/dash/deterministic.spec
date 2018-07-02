@@ -11,6 +11,7 @@ else:
     raise Exception('no name')
 
 hiddenimports = collect_submodules('trezorlib')
+hiddenimports = collect_submodules('safetlib')
 hiddenimports += collect_submodules('btchip')
 hiddenimports += collect_submodules('keepkeylib')
 hiddenimports += collect_submodules('websocket')
@@ -33,6 +34,7 @@ hiddenimports += [
     'plugins.keepkey.qt',
     'plugins.labels.qt',
     'plugins.trezor.qt',
+    'plugins.safe_t.qt',
     'plugins.ledger.qt',
     'plugins.virtualkeyboard.qt',
 ]
@@ -48,6 +50,7 @@ datas = [
     ('C:\\zbar\\bin', '.'),
 ]
 datas += collect_data_files('trezorlib')
+datas += collect_data_files('safetlib')
 datas += collect_data_files('btchip')
 datas += collect_data_files('keepkeylib')
 

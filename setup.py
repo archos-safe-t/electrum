@@ -60,6 +60,7 @@ setup(
         'electrum_dash_plugins.labels',
         'electrum_dash_plugins.ledger',
         'electrum_dash_plugins.trezor',
+        'electrum_dash_plugins.safe_t',
         'electrum_dash_plugins.digitalbitbox',
         'electrum_dash_plugins.virtualkeyboard',
     ],
