@@ -29,6 +29,7 @@ wine pip install pycryptodomex==3.6.0
 wine pip install btchip-python==0.1.26
 wine pip install keepkey==4.0.2
 wine pip install trezor==0.9.1
+wine pip install safet==0.1.2
 
 mkdir $WINEPREFIX/drive_c/Qt
 ln -s $PYHOME/Lib/site-packages/PyQt5/ $WINEPREFIX/drive_c/Qt/5.5.1

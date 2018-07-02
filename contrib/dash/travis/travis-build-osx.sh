@@ -26,7 +26,8 @@ sudo pip3 install \
     pycryptodomex==3.6.0 \
     btchip-python==0.1.26 \
     keepkey==4.0.2 \
-    trezor==0.9.1
+    trezor==0.9.1 \
+    safet==0.1.2
 
 pyrcc5 icons.qrc -o gui/qt/icons_rc.py
 

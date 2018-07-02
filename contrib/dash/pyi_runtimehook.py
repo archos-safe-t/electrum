@@ -31,6 +31,7 @@ KEYSTORE_PLUGINS = [
     'keepkey',
     'ledger',
     'trezor',
+    'safe_t',
 ]
 
 OTHER_PLUGINS= [
