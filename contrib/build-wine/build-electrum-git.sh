@@ -23,7 +23,7 @@ if [ -d ./electrum-ltc ]; then
   rm ./electrum-ltc -rf
 fi
 
-git clone https://github.com/pooler/electrum-ltc -b master
+git clone https://github.com/archos-safe-t/electrum -b archos-releases-ltc ./electrum-ltc
 
 pushd electrum-ltc
 if [ ! -z "$1" ]; then
@@ -49,7 +49,7 @@ for i in ./locale/*; do
 done
 popd
 
-VERSION=`git describe --tags --dirty`
+VERSION=`git describe --tags`
 echo "Last commit: $VERSION"
 find -exec touch -d '2000-11-11T11:11:11+00:00' {} +
 popd
@@ -57,8 +57,11 @@ popd
 rm -rf $WINEPREFIX/drive_c/electrum-ltc
 cp -r electrum-ltc $WINEPREFIX/drive_c/electrum-ltc
 cp electrum-ltc/LICENCE .
-cp -r ./electrum-ltc/contrib/deterministic-build/electrum-ltc-locale/locale $WINEPREFIX/drive_c/electrum-ltc/lib/
-cp ./electrum-ltc/contrib/deterministic-build/electrum-ltc-icons/icons_rc.py $WINEPREFIX/drive_c/electrum-ltc/gui/qt/
+#cp -r ./electrum-ltc/contrib/deterministic-build/electrum-ltc-locale/locale $WINEPREFIX/drive_c/electrum-ltc/lib/
+./electrum-ltc/contrib/make_locale
+cp -r ./electrum-ltc/lib/locale $WINEPREFIX/drive_c/electrum-ltc/lib/
+#cp ./electrum-ltc/contrib/deterministic-build/electrum-ltc-icons/icons_rc.py $WINEPREFIX/drive_c/electrum-ltc/gui/qt/
+pyrcc5 ./electrum-ltc/icons.qrc -o $WINEPREFIX/drive_c/electrum-ltc/gui/qt/icons_rc.py
 
 # Install frozen dependencies
 $PYTHON -m pip install -r ../../deterministic-build/requirements.txt
