@@ -25,6 +25,7 @@
 
 import hashlib
 import hmac
+import os
 
 from .util import bfh, bh2u, BitcoinException, print_error, assert_bytes, to_bytes, inv_dict, to_string
 from . import version

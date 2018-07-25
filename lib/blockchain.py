@@ -24,7 +24,7 @@ import os
 import threading
 
 from .bitcoin import *
-from .util import *
+from . import util
 from . import constants
 
 MAX_TARGET = 0x00000000FFFF0000000000000000000000000000000000000000000000000000

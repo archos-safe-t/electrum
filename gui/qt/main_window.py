@@ -40,7 +40,7 @@ from .exception_window import Exception_Hook
 from PyQt5.QtWidgets import *
 
 from electrum import keystore, simple_config, ecc
-from electrum.bitcoin import COIN, is_address, TYPE_ADDRESS
+from electrum.bitcoin import COIN, is_address, TYPE_ADDRESS, NetworkConstants
 from electrum import constants
 from electrum.plugins import run_hook
 from electrum.i18n import _

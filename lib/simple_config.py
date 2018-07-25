@@ -7,10 +7,9 @@ from decimal import Decimal
 from typing import Union
 
 from copy import deepcopy
-
+from .util import (user_dir, print_error, PrintError, format_fee_satoshis, quantize_feerate,
+                   NoDynamicFeeEstimates, make_dir, assert_datadir_available)
 from . import util
-from .util import (user_dir, print_error, PrintError, make_dir,
-                   NoDynamicFeeEstimates, format_fee_satoshis, quantize_feerate)
 from .i18n import _
 
 FEE_ETA_TARGETS = [25, 10, 5, 2]
@@ -204,6 +203,9 @@ class SimpleConfig(PrintError):
     def is_modifiable(self, key):
         return key not in self.cmdline_options
 
+    def has_fee_mempool(self):
+        return bool(self.mempool_fees)
+
     def save_user_config(self):
         if not self.path:
             return
@@ -231,7 +233,7 @@ class SimpleConfig(PrintError):
             return path
 
         # default path
-        util.assert_datadir_available(self.path)
+        assert_datadir_available(self.path)
         dirpath = os.path.join(self.path, "wallets")
         make_dir(dirpath, allow_symlink=False)
 

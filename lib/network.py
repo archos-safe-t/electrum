@@ -712,7 +712,7 @@ class Network(util.DaemonThread):
         # server.version should be the first message
         params = [ELECTRUM_VERSION, PROTOCOL_VERSION]
         self.queue_request('server.version', params, interface)
-        self.queue_request('blockchain.headers.subscribe', [True], interface)
+        self.queue_request('blockchain.headers.subscribe', [], interface)
         if server == self.default_server:
             self.switch_to_interface(server)
         #self.notify('interfaces')
@@ -993,8 +993,8 @@ class Network(util.DaemonThread):
         self.on_stop()
 
     def on_notify_header(self, interface, header_dict):
-        header_hex, height = header_dict['hex'], header_dict['height']
-        header = blockchain.deserialize_header(bfh(header_hex), height)
+        height = header_dict['block_height']
+        header = header_dict
         if height < self.max_checkpoint():
             self.connection_down(interface.server)
             return
@@ -1152,7 +1152,7 @@ class Network(util.DaemonThread):
 
     def subscribe_to_headers(self, callback=None):
         command = 'blockchain.headers.subscribe'
-        invocation = lambda c: self.send([(command, [True])], c)
+        invocation = lambda c: self.send([(command, [])], c)
 
         return Network.__with_default_synchronous_callback(invocation, callback)
 
