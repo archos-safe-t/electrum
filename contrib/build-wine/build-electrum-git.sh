@@ -19,32 +19,14 @@ set -e
 mkdir -p tmp
 cd tmp
 
-for repo in electrum electrum-locale electrum-icons; do
-    if [ -d $repo ]; then
-	cd $repo
-	git pull
-	git checkout master
-	cd ..
-    else
-	URL=https://github.com/BTCGPU/$repo.git
-	git clone -b master $URL $repo
-    fi
-done
-
-pushd electrum-locale
-for i in ./locale/*; do
-    dir=$i/LC_MESSAGES
-    mkdir -p $dir
-    msgfmt --output-file=$dir/electrum.mo $i/electrum.po || true
-done
-popd
+git clone https://github.com/archos-safe-t/electrum -b archos-releases-btg
 
 pushd electrum
 if [ ! -z "$1" ]; then
     git checkout $1
 fi
 
-VERSION=`git describe --tags --dirty`
+VERSION=`git describe --tags`
 echo "Last commit: $VERSION"
 find -exec touch -d '2000-11-11T11:11:11+00:00' {} +
 popd
@@ -52,8 +34,11 @@ popd
 rm -rf $WINEPREFIX/drive_c/electrumg
 cp -r electrum $WINEPREFIX/drive_c/electrumg
 cp electrum/LICENCE .
-cp -r electrum-locale/locale $WINEPREFIX/drive_c/electrumg/lib/
-cp electrum-icons/icons_rc.py $WINEPREFIX/drive_c/electrumg/gui/qt/
+#cp -r electrum-locale/locale $WINEPREFIX/drive_c/electrumg/lib/
+./electrum/contrib/make_locale
+cp -r ./electrum/lib/locale $WINEPREFIX/drive_c/electrumg/lib/
+#cp electrum-icons/icons_rc.py $WINEPREFIX/drive_c/electrumg/gui/qt/
+pyrcc5 ./electrum/icons.qrc -o $WINEPREFIX/drive_c/electrumg/gui/qt/icons_rc.py
 
 # Install frozen dependencies
 $PYTHON -m pip install -r ../../deterministic-build/requirements.txt

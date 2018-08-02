@@ -4,7 +4,7 @@
 PYTHON_VERSION=3.6.4
 BUILDDIR=/tmp/electrumg-build
 PACKAGE=ElectrumG
-GIT_REPO=https://github.com/BTCGPU/electrum
+GIT_REPO=https://github.com/archos-safe-t/electrum
 
 . $(dirname "$0")/base.sh
 
