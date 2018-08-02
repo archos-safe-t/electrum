@@ -103,6 +103,9 @@ requests==2.18.4 \
     --hash=sha256:9c443e7324ba5b85070c4a818ade28bfabedf16ea10206da1132edaa6dda237e
 rlp==0.6.0 \
     --hash=sha256:87879a0ba1479b760cee98af165de2eee95258b261faa293199f60742be96f34
+safet==0.1.3 \
+    --hash=sha256:ba80fe9f6ba317ab9514a8726cd3792e68eb46dd419f380d48ae4a0ccae646dc \
+    --hash=sha256:e5d8e6a87c8bdf1cefd07004181b93fd7631557fdab09d143ba8d1b29291d6dc
 setuptools==39.0.1 \
     --hash=sha256:8010754433e3211b9cdbbf784b50f30e80bf40fc6b05eb5f865fab83300599b8 \
     --hash=sha256:bec7badf0f60e7fc8153fac47836edc41b74e5d541d7692e614e635720d6a7c7

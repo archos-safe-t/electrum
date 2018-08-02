@@ -57,6 +57,7 @@ setup(
         'electrum_plugins.keepkey',
         'electrum_plugins.ledger',
         'electrum_plugins.trezor',
+        'electrum_plugins.safe_t',
         'electrum_plugins.virtualkeyboard',
     ],
     package_dir={
