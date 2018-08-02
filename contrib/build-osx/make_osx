@@ -41,14 +41,15 @@ rm -rf ./dist
 rm  -rf $BUILDDIR > /dev/null 2>&1
 mkdir $BUILDDIR
 
-info "Downloading icons and locale..."
-for repo in icons locale; do
-  git clone $GIT_REPO-$repo $BUILDDIR/electrum-$repo
-done
+#info "Downloading icons and locale..."
+#for repo in icons locale; do
+#  git clone $GIT_REPO-$repo $BUILDDIR/electrum-$repo
+#done
 
-cp -R $BUILDDIR/electrum-locale/locale/ ./lib/locale/
-cp    $BUILDDIR/electrum-icons/icons_rc.py ./gui/qt/
-
+#cp -R $BUILDDIR/electrum-locale/locale/ ./lib/locale/
+#cp    $BUILDDIR/electrum-icons/icons_rc.py ./gui/qt/
+python3 ./contrib/make_locale
+pyrcc5 icons.qrc -o ./gui/qt/icons_rc.py
 
 info "Downloading libusb..."
 curl https://homebrew.bintray.com/bottles/libusb-1.0.22.el_capitan.bottle.tar.gz | \
