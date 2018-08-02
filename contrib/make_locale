@@ -54,20 +54,25 @@ if crowdin_api_key:
     print("", "export:", "-" * 20, response.text, "-" * 20, sep="\n")
 
 # Download & unzip
-print('Download translations')
-s = requests.request('GET', 'https://crowdin.com/download/project/' + crowdin_identifier + '.zip').content
-zfobj = zipfile.ZipFile(io.BytesIO(s))
+#print('Download translations')
+#s = requests.request('GET', 'https://crowdin.com/download/project/' + crowdin_identifier + '.zip').content
+#zfobj = zipfile.ZipFile(io.BytesIO(s))
 
-print('Unzip translations')
-for name in zfobj.namelist():
-    if not name.startswith('electrumg-client/locale'):
-        continue
-    if name.endswith('/'):
-        if not os.path.exists(name[16:]):
-            os.mkdir(name[16:])
-    else:
-        with open(name[16:], 'wb') as output:
-            output.write(zfobj.read(name))
+#print('Unzip translations')
+#for name in zfobj.namelist():
+#    if not name.startswith('electrumg-client/locale'):
+#        continue
+#    if name.endswith('/'):
+#        if not os.path.exists(name[16:]):
+#            os.mkdir(name[16:])
+#    else:
+#        with open(name[16:], 'wb') as output:
+#            output.write(zfobj.read(name))
+
+# Temporary fix since transalations cannot be downloaded from Crowdin without an API key anymore
+print('Get translations')
+cmd = 'git clone https://github.com/spesmilo/electrum-locale.git && cp -a electrum-locale/locale ./ && rm -rf electrum-locale'
+os.system(cmd)
 
 # Convert .po to .mo
 print('Installing')
