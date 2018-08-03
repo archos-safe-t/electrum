@@ -2,8 +2,8 @@
 
 import util
 
-from electrum.network import filter_protocol
-from electrum.blockchain import hash_header
+from electrumg.network import filter_protocol
+from electrumg.blockchain import hash_header
 import bitcoin
 
 peers = util.get_peers()

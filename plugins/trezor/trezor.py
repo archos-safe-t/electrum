@@ -1,13 +1,13 @@
 from binascii import hexlify, unhexlify
 
-from electrum.util import bfh, bh2u, versiontuple
-from electrum.bitcoin import (b58_address_to_hash160, xpub_from_pubkey,
+from electrumg.util import bfh, bh2u, versiontuple
+from electrumg.bitcoin import (b58_address_to_hash160, xpub_from_pubkey,
                               TYPE_ADDRESS, TYPE_SCRIPT)
-from electrum import constants
-from electrum.i18n import _
-from electrum.plugins import BasePlugin, Device
-from electrum.transaction import deserialize, Transaction
-from electrum.keystore import Hardware_KeyStore, is_xpubkey, parse_xpubkey
+from electrumg import constants
+from electrumg.i18n import _
+from electrumg.plugins import BasePlugin, Device
+from electrumg.transaction import deserialize, Transaction
+from electrumg.keystore import Hardware_KeyStore, is_xpubkey, parse_xpubkey
 
 from ..hw_wallet import HW_PluginBase
 

@@ -68,24 +68,24 @@ if not is_android:
 # load local module as electrum
 if is_local or is_android:
     import imp
-    imp.load_module('electrum', *imp.find_module('lib'))
-    imp.load_module('electrum_gui', *imp.find_module('gui'))
-    imp.load_module('electrum_plugins', *imp.find_module('plugins'))
+    imp.load_module('electrumg', *imp.find_module('lib'))
+    imp.load_module('electrumg_gui', *imp.find_module('gui'))
+    imp.load_module('electrumg_plugins', *imp.find_module('plugins'))
 
 
 
-from electrum import bitcoin, util
-from electrum import constants
-from electrum import SimpleConfig, Network
-from electrum.wallet import Wallet, Imported_Wallet
-from electrum.storage import WalletStorage, get_derivation_used_for_hw_device_encryption
-from electrum.util import print_msg, print_stderr, json_encode, json_decode, UserCancelled
-from electrum.util import set_verbosity, InvalidPassword
-from electrum.commands import get_parser, known_commands, Commands, config_variables
-from electrum import daemon
-from electrum import keystore
-from electrum.mnemonic import Mnemonic
-import electrum_plugins
+from electrumg import bitcoin, util
+from electrumg import constants
+from electrumg import SimpleConfig, Network
+from electrumg.wallet import Wallet, Imported_Wallet
+from electrumg.storage import WalletStorage, get_derivation_used_for_hw_device_encryption
+from electrumg.util import print_msg, print_stderr, json_encode, json_decode, UserCancelled
+from electrumg.util import set_verbosity, InvalidPassword
+from electrumg.commands import get_parser, known_commands, Commands, config_variables
+from electrumg import daemon
+from electrumg import keystore
+from electrumg.mnemonic import Mnemonic
+import electrumg_plugins
 
 # get password routine
 def prompt_password(prompt, confirm=True):
@@ -330,7 +330,7 @@ def run_offline_command(config, config_options, plugins):
     return result
 
 def init_plugins(config, gui_name):
-    from electrum.plugins import Plugins
+    from electrumg.plugins import Plugins
     return Plugins(config, is_local or is_android, gui_name)
 
 
@@ -441,7 +441,7 @@ if __name__ == '__main__':
                 d = daemon.Daemon(config, fd, False)
                 d.start()
                 if config.get('websocket_server'):
-                    from electrum import websockets
+                    from electrumg import websockets
                     websockets.WebSocketServer(config, d.network).start()
                 if config.get('requests_dir'):
                     path = os.path.join(config.get('requests_dir'), 'index.html')

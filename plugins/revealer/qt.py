@@ -24,11 +24,11 @@ from hashlib import sha256
 
 from PyQt5.QtPrintSupport import QPrinter
 
-from electrum.plugins import BasePlugin, hook
-from electrum.i18n import _
-from electrum_gui.qt.util import *
-from electrum_gui.qt.qrtextedit import ScanQRTextEdit
-from electrum.util import to_bytes
+from electrumg.plugins import BasePlugin, hook
+from electrumg.i18n import _
+from electrumg_gui.qt.util import *
+from electrumg_gui.qt.qrtextedit import ScanQRTextEdit
+from electrumg.util import to_bytes
 
 
 class Plugin(BasePlugin):
