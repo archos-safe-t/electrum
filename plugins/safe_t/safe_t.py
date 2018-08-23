@@ -491,6 +491,7 @@ class SafeTPlugin(HW_PluginBase):
         d = deserialize(tx.raw)
         t.version = d['version']
         t.lock_time = d['lockTime']
+        t.preblock_hash = bfh(d['preblockhash'])
         inputs = self.tx_inputs(tx)
         t._extend_inputs(inputs)
         for vout in d['outputs']:

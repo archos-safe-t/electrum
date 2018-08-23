@@ -561,7 +561,7 @@ def deserialize(raw: str, force_full_parse=False) -> dict:
     vds = BCDataStream()
     vds.write(raw_bytes)
     d['version'] = vds.read_int32()
-    d['preblockhash'] = vds.read_bytes(32).hex() if d['version'] == 12 else ''
+    d['preblockhash'] = rev_hex(vds.read_bytes(32).hex()) if d['version'] == 12 else ''
     n_vin = vds.read_compact_size()
     is_segwit = (n_vin == 0)
     if is_segwit:
