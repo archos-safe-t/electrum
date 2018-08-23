@@ -2,10 +2,10 @@ from binascii import hexlify, unhexlify
 import traceback
 import sys
 
-from electrum.util import bfh, bh2u, versiontuple, UserCancelled
+from electrum.util import bfh, bh2u, versiontuple, UserCancelled, to_bytes
 from electrum.bitcoin import (b58_address_to_hash160, xpub_from_pubkey, deserialize_xpub,
                               TYPE_ADDRESS, TYPE_SCRIPT, is_address)
-from electrum import constants
+from electrum import constants, util
 from electrum.i18n import _
 from electrum.plugins import BasePlugin, Device
 from electrum.transaction import deserialize, Transaction
@@ -305,10 +305,11 @@ class SafeTPlugin(HW_PluginBase):
     def sign_transaction(self, keystore, tx, prev_tx, xpub_path):
         self.prev_tx = prev_tx
         self.xpub_path = xpub_path
+        preblockHash = bfh(tx.preblockhash)
         client = self.get_client(keystore)
         inputs = self.tx_inputs(tx, True, keystore.get_script_gen())
         outputs = self.tx_outputs(keystore.get_derivation(), tx, keystore.get_script_gen())
-        signatures = client.sign_tx(self.get_coin_name(), inputs, outputs, lock_time=tx.locktime)[0]
+        (signatures, serialized_tx) = client.sign_tx(self.get_coin_name(), inputs, outputs, preblockHash=preblockHash, version=tx.version, lock_time=tx.locktime)
         signatures = [(bh2u(x) + '01') for x in signatures]
         tx.update_signatures(signatures)
 
