@@ -968,7 +968,7 @@ class Network(util.DaemonThread):
                 else:
                     is_fake_headers = False
 
-        length = 80 * len(bitcoin.NetworkConstants.CHECKPOINTS) * 2016
+        length = 80 * len(constants.net.CHECKPOINTS) * 2016
         if not os.path.exists(filename) or os.path.getsize(filename) < length or is_fake_headers:
             with open(filename, 'wb') as f:
                 if length>0:

@@ -302,7 +302,7 @@ class Blockchain(util.PrintError):
 
     def get_target(self, height):
         # compute target from chunk x, used in chunk x+1
-        if NetworkConstants.TESTNET:
+        if constants.net.TESTNET:
             return 0
         if height < NetworkConstants.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT:
            index = height // 2016 - 1
