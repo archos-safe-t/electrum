@@ -791,7 +791,7 @@ class Network(util.DaemonThread):
             self.connection_down(interface.server)
             return
         if interface.blockchain.height() < interface.tip:
-            if index < bitcoin.NetworkConstants.BITCOIN_DIAMOND_CHECKPOINT_INDEX - 1:
+            if index < constants.net.BITCOIN_DIAMOND_CHECKPOINT_INDEX - 1:
                 self.request_chunk(interface, index+1)
             else:
                 self.request_header(interface, interface.blockchain.height()+1)
@@ -917,7 +917,7 @@ class Network(util.DaemonThread):
         # If not finished, get the next header
         if next_height:
             # self.request_header(interface, next_height)
-            if interface.mode == 'catch_up' and interface.tip > next_height + 50 and next_height < ((bitcoin.NetworkConstants.BITCOIN_DIAMOND_CHECKPOINT_INDEX-1) * 2016):
+            if interface.mode == 'catch_up' and interface.tip > next_height + 50 and next_height < ((constants.net.BITCOIN_DIAMOND_CHECKPOINT_INDEX-1) * 2016):
                 self.request_chunk(interface, next_height // 2016)
             else:
                 self.request_header(interface, next_height)

@@ -80,6 +80,10 @@ class BitcoinTestnet:
     DEFAULT_PORTS = {'t': '51001', 's': '51002'}
     DEFAULT_SERVERS = read_json('servers_testnet.json', {})
     CHECKPOINTS = read_json('checkpoints_testnet.json', [])
+    # Bitcoin Diamond fork block specification
+    BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT = 495867
+    BITCOIN_DIAMOND_FORK_BLOCK_HASH = '458535405446053c9db6a16ec7e5b022429fedde605ce81bb24c6cfe6f43fc89'
+    BITCOIN_DIAMOND_CHECKPOINT_INDEX = 495867 // 2016
 
     XPRV_HEADERS = {
         'standard':    0x04358394,  # tprv

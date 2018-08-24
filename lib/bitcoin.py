@@ -68,40 +68,6 @@ XPUB_HEADERS = {
     'p2wsh': 0x2aa7ed3
 }
 
-
-class NetworkConstants:
-
-    @classmethod
-    def set_mainnet(cls):
-        cls.TESTNET = False
-        cls.WIF_PREFIX = 0x80
-        cls.ADDRTYPE_P2PKH = 0
-        cls.ADDRTYPE_P2SH = 5
-        cls.SEGWIT_HRP = "bc"
-        cls.GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
-        cls.DEFAULT_PORTS = {'t': '50001', 's': '50002'}
-        cls.DEFAULT_SERVERS = read_json('servers.json', {})
-        cls.CHECKPOINTS = read_json('checkpoints.json', [])
-        # Bitcoin Diamond fork block specification
-        cls.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT = 495867
-        cls.BITCOIN_DIAMOND_FORK_BLOCK_HASH = '458535405446053c9db6a16ec7e5b022429fedde605ce81bb24c6cfe6f43fc89'
-        cls.BITCOIN_DIAMOND_CHECKPOINT_INDEX = 495867 // 2016
-
-    @classmethod
-    def set_testnet(cls):
-        cls.TESTNET = True
-        cls.WIF_PREFIX = 0xef
-        cls.ADDRTYPE_P2PKH = 111
-        cls.ADDRTYPE_P2SH = 196
-        cls.SEGWIT_HRP = "tb"
-        cls.GENESIS = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
-        cls.DEFAULT_PORTS = {'t':'51001', 's':'51002'}
-        cls.DEFAULT_SERVERS = read_json('servers_testnet.json', {})
-        cls.CHECKPOINTS = read_json('checkpoints_testnet.json', [])
-
-
-NetworkConstants.set_mainnet()
-
 ################################## transactions
 
 COINBASE_MATURITY = 100

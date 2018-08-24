@@ -159,7 +159,7 @@ class Blockchain(util.PrintError):
         self._size = os.path.getsize(p)//80 if os.path.exists(p) else 0
 
     def verify_header(self, header, prev_hash, target):
-        if header.get('block_height') >= NetworkConstants.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT:
+        if header.get('block_height') >= constants.net.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT:
             _hash = bcd_hash_header(header)
         else:
             _hash = hash_header(header)
@@ -167,7 +167,7 @@ class Blockchain(util.PrintError):
             raise Exception("prev hash mismatch: %s vs %s" % (prev_hash, header.get('prev_block_hash')))
         if constants.net.TESTNET:
             return
-        if header.get('block_height') == NetworkConstants.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT and hash_header(header) != NetworkConstants.BITCOIN_DIAMOND_FORK_BLOCK_HASH:
+        if header.get('block_height') == constants.net.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT and hash_header(header) != constants.net.BITCOIN_DIAMOND_FORK_BLOCK_HASH:
             raise BaseException("block at height %i is not bitcoin diamond chain fork block. hash %s" % (header.get('block_height'), hash_header(header)))            
         bits = self.target_to_bits(target)
         if bits != header.get('bits'):
@@ -304,7 +304,7 @@ class Blockchain(util.PrintError):
         # compute target from chunk x, used in chunk x+1
         if constants.net.TESTNET:
             return 0
-        if height < NetworkConstants.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT:
+        if height < constants.net.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT:
            index = height // 2016 - 1
         else:
              return self.get_bcd_target(height)        
@@ -328,7 +328,7 @@ class Blockchain(util.PrintError):
         return new_target
 
     def get_bcd_target(self, height):
-        bcd_height = height - NetworkConstants.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT
+        bcd_height = height - constants.net.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT
         if bcd_height == 0:
             return MAX_TARGET
 
@@ -337,8 +337,8 @@ class Blockchain(util.PrintError):
 
         index = bcd_height // 72 - 1
         # new target
-        first = self.read_header(index * 72 + NetworkConstants.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT)
-        last = self.read_header(index * 72 + 71 + NetworkConstants.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT)
+        first = self.read_header(index * 72 + constants.net.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT)
+        last = self.read_header(index * 72 + 71 + constants.net.BITCOIN_DIAMOND_FORK_BLOCK_HEIGHT)
         bits = last.get('bits')
         target = self.bits_to_target(bits)
         nActualTimespan = last.get('timestamp') - first.get('timestamp')

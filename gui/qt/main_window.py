@@ -40,7 +40,7 @@ from .exception_window import Exception_Hook
 from PyQt5.QtWidgets import *
 
 from electrum import keystore, simple_config, ecc
-from electrum.bitcoin import COIN, is_address, TYPE_ADDRESS, NetworkConstants
+from electrum.bitcoin import COIN, is_address, TYPE_ADDRESS
 from electrum import constants
 from electrum.plugins import run_hook
 from electrum.i18n import _
@@ -378,7 +378,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.setGeometry(100, 100, 840, 400)
 
     def watching_only_changed(self):
-        name = "Electrum BCD Testnet" if NetworkConstants.TESTNET else "Electrum BCD"
+        name = "Electrum BCD Testnet" if constants.net.TESTNET else "Electrum BCD"
         title = '%s %s  -  %s' % (name, self.wallet.electrum_version,
                                         self.wallet.basename())
         extra = [self.wallet.storage.get('wallet_type', '?')]
