@@ -1,10 +1,10 @@
 import time
 from struct import pack
 
-from electrum.i18n import _
-from electrum.util import PrintError, UserCancelled
-from electrum.keystore import bip39_normalize_passphrase
-from electrum.bitcoin import serialize_xpub
+from electrum_bcd.i18n import _
+from electrum_bcd.util import PrintError, UserCancelled
+from electrum_bcd.keystore import bip39_normalize_passphrase
+from electrum_bcd.bitcoin import serialize_xpub
 
 
 class GuiMixin(object):
@@ -121,8 +121,8 @@ class KeepKeyClientBase(GuiMixin, PrintError):
 
     def has_usable_connection_with_device(self):
         try:
-            res = self.ping("electrum pinging device")
-            assert res == "electrum pinging device"
+            res = self.ping("electrum-bcd pinging device")
+            assert res == "electrum-bcd pinging device"
         except BaseException:
             return False
         return True

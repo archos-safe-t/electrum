@@ -17,16 +17,16 @@ from kivy.lang import Builder
 from kivy.factory import Factory
 from kivy.utils import platform
 
-from electrum.util import profiler, parse_URI, format_time, InvalidPassword, NotEnoughFunds, Fiat
-from electrum import bitcoin
-from electrum.util import timestamp_to_datetime
-from electrum.paymentrequest import PR_UNPAID, PR_PAID, PR_UNKNOWN, PR_EXPIRED
-from electrum.plugins import run_hook
+from electrum_bcd.util import profiler, parse_URI, format_time, InvalidPassword, NotEnoughFunds, Fiat
+from electrum_bcd import bitcoin
+from electrum_bcd.util import timestamp_to_datetime
+from electrum_bcd.paymentrequest import PR_UNPAID, PR_PAID, PR_UNKNOWN, PR_EXPIRED
+from electrum_bcd.plugins import run_hook
 
 from .context_menu import ContextMenu
 
 
-from electrum_gui.kivy.i18n import _
+from electrum_bcd_gui.kivy.i18n import _
 
 
 class CScreen(Factory.Screen):
@@ -171,9 +171,9 @@ class SendScreen(CScreen):
     payment_request = None
 
     def set_URI(self, text):
-        import electrum
+        import electrum_bcd
         try:
-            uri = electrum.util.parse_URI(text, self.app.on_pr)
+            uri = electrum_bcd.util.parse_URI(text, self.app.on_pr)
         except:
             self.app.show_info(_("Not a BitcoinDiamond URI"))
             return
@@ -213,7 +213,7 @@ class SendScreen(CScreen):
             # it should be already saved
             return
         # save address as invoice
-        from electrum.paymentrequest import make_unsigned_request, PaymentRequest
+        from electrum_bcd.paymentrequest import make_unsigned_request, PaymentRequest
         req = {'address':self.screen.address, 'memo':self.screen.message}
         amount = self.app.get_amount(self.screen.amount) if self.screen.amount else 0
         req['amount'] = amount
@@ -353,7 +353,7 @@ class ReceiveScreen(CScreen):
         Clock.schedule_once(lambda dt: self.update_qr())
 
     def get_URI(self):
-        from electrum.util import create_URI
+        from electrum_bcd.util import create_URI
         amount = self.screen.amount
         if amount:
             a, u = self.screen.amount.split()

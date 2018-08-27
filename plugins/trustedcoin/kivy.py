@@ -30,8 +30,8 @@ from decimal import Decimal
 
 from kivy.clock import Clock
 
-from electrum.i18n import _
-from electrum.plugins import hook
+from electrum_bcd.i18n import _
+from electrum_bcd.plugins import hook
 from .trustedcoin import TrustedCoinPlugin, server, KIVY_DISCLAIMER, TrustedCoinException, ErrorConnectingServer
 
 
@@ -54,7 +54,7 @@ class Plugin(TrustedCoinPlugin):
         wizard.run('accept_terms_of_use')
 
     def prompt_user_for_otp(self, wallet, tx, on_success, on_failure):
-        from electrum_gui.kivy.uix.dialogs.label_dialog import LabelDialog
+        from electrum_bcd_gui.kivy.uix.dialogs.label_dialog import LabelDialog
         msg = _('Please enter your Google Authenticator code')
         d = LabelDialog(msg, '', lambda otp: self.on_otp(wallet, tx, otp, on_success, on_failure))
         d.open()

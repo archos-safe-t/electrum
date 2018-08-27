@@ -31,18 +31,18 @@ import base64
 from urllib.parse import urljoin
 from urllib.parse import quote
 
-import electrum
-from electrum import bitcoin, ecc
-from electrum import constants
-from electrum import keystore
-from electrum.bitcoin import *
-from electrum.mnemonic import Mnemonic
-from electrum import version
-from electrum.wallet import Multisig_Wallet, Deterministic_Wallet
-from electrum.i18n import _
-from electrum.plugins import BasePlugin, hook
-from electrum.util import NotEnoughFunds
-from electrum.storage import STO_EV_USER_PW
+import electrum_bcd
+from electrum_bcd import bitcoin, ecc
+from electrum_bcd import constants
+from electrum_bcd import keystore
+from electrum_bcd.bitcoin import *
+from electrum_bcd.mnemonic import Mnemonic
+from electrum_bcd import version
+from electrum_bcd.wallet import Multisig_Wallet, Deterministic_Wallet
+from electrum_bcd.i18n import _
+from electrum_bcd.plugins import BasePlugin, hook
+from electrum_bcd.util import NotEnoughFunds
+from electrum_bcd.storage import STO_EV_USER_PW
 
 # signing_xpub is hardcoded so that the wallet can be restored from seed, without TrustedCoin's server
 def get_signing_xpub():

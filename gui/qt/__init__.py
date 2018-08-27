@@ -38,16 +38,16 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import PyQt5.QtCore as QtCore
 
-from electrum.i18n import _, set_language
-from electrum.plugins import run_hook
-from electrum import WalletStorage
-from electrum.base_wizard import GoBack
-# from electrum.synchronizer import Synchronizer
-# from electrum.verifier import SPV
-# from electrum.util import DebugMem
-from electrum.util import (UserCancelled, print_error,
+from electrum_bcd.i18n import _, set_language
+from electrum_bcd.plugins import run_hook
+from electrum_bcd import WalletStorage
+from electrum_bcd.base_wizard import GoBack
+# from electrum_bcd.synchronizer import Synchronizer
+# from electrum_bcd.verifier import SPV
+# from electrum_bcd.util import DebugMem
+from electrum_bcd.util import (UserCancelled, print_error,
                            WalletFileException, BitcoinException)
-# from electrum.wallet import Abstract_Wallet
+# from electrum_bcd.wallet import Abstract_Wallet
 
 from .installwizard import InstallWizard
 
@@ -98,7 +98,7 @@ class ElectrumGui:
         if hasattr(QtCore.Qt, "AA_ShareOpenGLContexts"):
             QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
         if hasattr(QGuiApplication, 'setDesktopFileName'):
-            QGuiApplication.setDesktopFileName('electrum.desktop')
+            QGuiApplication.setDesktopFileName('electrum-bcd.desktop')
         self.config = config
         self.daemon = daemon
         self.plugins = plugins
@@ -112,7 +112,7 @@ class ElectrumGui:
         # init tray
         self.dark_icon = self.config.get("dark_icon", False)
         self.tray = QSystemTrayIcon(self.tray_icon(), None)
-        self.tray.setToolTip('Electrum')
+        self.tray.setToolTip('Electrum-BCD')
         self.tray.activated.connect(self.tray_activated)
         self.build_tray_menu()
         self.tray.show()

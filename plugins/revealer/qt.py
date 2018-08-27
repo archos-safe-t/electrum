@@ -25,11 +25,11 @@ from decimal import Decimal
 
 from PyQt5.QtPrintSupport import QPrinter
 
-from electrum.plugins import BasePlugin, hook
-from electrum.i18n import _
-from electrum_gui.qt.util import *
-from electrum_gui.qt.qrtextedit import ScanQRTextEdit
-from electrum.util import to_bytes, make_dir
+from electrum_bcd.plugins import BasePlugin, hook
+from electrum_bcd.i18n import _
+from electrum_bcd_gui.qt.util import *
+from electrum_bcd_gui.qt.qrtextedit import ScanQRTextEdit
+from electrum_bcd.util import to_bytes, make_dir
 
 
 class Plugin(BasePlugin):

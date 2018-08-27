@@ -3,10 +3,10 @@ import curses, datetime, locale
 from decimal import Decimal
 import getpass
 
-import electrum
-from electrum.util import format_satoshis, set_verbosity
-from electrum.bitcoin import is_address, COIN, TYPE_ADDRESS
-from electrum import Wallet, WalletStorage
+import electrum_bcd
+from electrum_bcd.util import format_satoshis, set_verbosity
+from electrum_bcd.bitcoin import is_address, COIN, TYPE_ADDRESS
+from electrum_bcd import Wallet, WalletStorage
 
 _ = lambda x:x
 
@@ -21,7 +21,7 @@ class ElectrumGui:
         self.preblockhash = self.network.get_pre_blockhash()
         storage = WalletStorage(config.get_wallet_path())
         if not storage.file_exists():
-            print("Wallet not found. try 'electrum create'")
+            print("Wallet not found. try 'electrum-bcd create'")
             exit()
         if storage.is_encrypted():
             password = getpass.getpass('Password:', stream=None)
