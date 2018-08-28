@@ -84,9 +84,9 @@ class SafeTPlugin(HW_PluginBase):
 
     firmware_URL = 'https://safe-t.io'
     libraries_URL = 'https://github.com/archos-safe-t/python-safet'
-    minimum_firmware = (1, 0, 0)
+    minimum_firmware = (1, 1, 0)
     keystore_class = SafeTKeyStore
-    minimum_library = (0, 1, 0)
+    minimum_library = (0, 1, 4)
     SUPPORTED_XTYPES = ('standard', 'p2wpkh-p2sh', 'p2wpkh', 'p2wsh-p2sh', 'p2wsh')
 
     MAX_LABEL_LEN = 32
