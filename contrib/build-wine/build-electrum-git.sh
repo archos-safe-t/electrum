@@ -23,7 +23,7 @@ if [ -d ./electrum ]; then
   rm ./electrum -rf
 fi
 
-git clone https://github.com/archos-safe-t/electrum -b archos-releases
+git clone https://github.com/archos-safe-t/electrum -b archos-releases-diamond
 
 pushd electrum
 if [ ! -z "$1" ]; then

@@ -6,7 +6,7 @@ Comment=Lightweight Bitcoin Diamond Client
 Exec=sh -c "PATH=\"\\$HOME/.local/bin:\\$PATH\" electrum-bcd %u"
 GenericName[en_US]=electrum-bcd
 GenericName=Emectrum-DIAMOND
-Icon=electrum-diamond
+Icon=electrum_bcd
 Name[en_US]=Electrum Bitcoin Diamond Wallet
 Name=Electrum Bitcoin Diamond Wallet
 Categories=Finance;Network;
