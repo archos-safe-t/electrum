@@ -23,7 +23,7 @@ if [ -d ./electrum ]; then
   rm ./electrum -rf
 fi
 
-git clone https://github.com/archos-safe-t/electrum -b archos-releases-diamond
+git clone https://github.com/archos-safe-t/electrum -b archos-releases-bcd
 
 pushd electrum
 if [ ! -z "$1" ]; then
@@ -54,21 +54,25 @@ echo "Last commit: $VERSION"
 find -exec touch -d '2000-11-11T11:11:11+00:00' {} +
 popd
 
-rm -rf $WINEPREFIX/drive_c/electrum
-cp -r electrum $WINEPREFIX/drive_c/electrum
+rm -rf $WINEPREFIX/drive_c/electrum-bcd
+cp -r electrum $WINEPREFIX/drive_c/electrum-bcd
 cp electrum/LICENCE .
-#cp -r ./electrum/contrib/deterministic-build/electrum-locale/locale $WINEPREFIX/drive_c/electrum/lib/
+#cp -r ./electrum/contrib/deterministic-build/electrum-locale/locale $WINEPREFIX/drive_c/electrum-bcd/lib/
 ./electrum/contrib/make_locale
-cp -r ./electrum/lib/locale $WINEPREFIX/drive_c/electrum/lib/
-#cp ./electrum/contrib/deterministic-build/electrum-icons/icons_rc.py $WINEPREFIX/drive_c/electrum/gui/qt/
-pyrcc5 ./electrum/icons.qrc -o $WINEPREFIX/drive_c/electrum/gui/qt/icons_rc.py
+cp -r ./electrum/lib/locale $WINEPREFIX/drive_c/electrum-bcd/lib/
+#cp ./electrum/contrib/deterministic-build/electrum-icons/icons_rc.py $WINEPREFIX/drive_c/electrum-bcd/gui/qt/
+pyrcc5 ./electrum/icons.qrc -o $WINEPREFIX/drive_c/electrum-bcd/gui/qt/icons_rc.py
 
+#install x13bcd_hash manually as package not available on Pypi
+unzip ../x13bcd_hash-1.0.6.win32.zip -d ../tmp
+mv ../tmp/Program\ Files\ \(x86\)/Python\ 3.5/Lib/site-packages/x13bcd_hash-1.0.6-py3.5.egg-info $WINEPREFIX/drive_c/python3.5.4/Lib/site-packages//x13bcd_hash-1.0.6-py3.5.egg-info
+mv ../tmp/Program\ Files\ \(x86\)/Python\ 3.5/Lib/site-packages/x13bcd_hash.cp35-win32.pyd $WINEPREFIX/drive_c/python3.5.4/Lib/site-packages//x13bcd_hash.pyd
 # Install frozen dependencies
 $PYTHON -m pip install -r ../../deterministic-build/requirements.txt
 
 $PYTHON -m pip install -r ../../deterministic-build/requirements-hw.txt
 
-pushd $WINEPREFIX/drive_c/electrum
+pushd $WINEPREFIX/drive_c/electrum-bcd
 $PYTHON setup.py install
 popd
 
@@ -89,7 +93,7 @@ popd
 wine "$WINEPREFIX/drive_c/Program Files (x86)/NSIS/makensis.exe" /DPRODUCT_VERSION=$VERSION electrum.nsi
 
 cd dist
-mv electrum-setup.exe $NAME_ROOT-$VERSION-setup.exe
+mv electrum-bcd-setup.exe $NAME_ROOT-$VERSION-setup.exe
 cd ..
 
 echo "Done."

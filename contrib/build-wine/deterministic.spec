@@ -13,7 +13,7 @@ else:
 PYTHON_VERSION = '3.5.4'
 PYHOME = 'c:/python' + PYTHON_VERSION
 
-home = 'C:\\electrum\\'
+home = 'C:\\electrum-bcd\\'
 
 # see https://github.com/pyinstaller/pyinstaller/issues/2005
 hiddenimports = []
@@ -32,10 +32,10 @@ binaries += [b for b in collect_dynamic_libs('PyQt5') if 'qwindowsvista' in b[0]
 binaries += [('C:/tmp/libsecp256k1.dll', '.')]
 
 datas = [
-    (home+'lib/*.json', 'electrum'),
-    (home+'lib/wordlist/english.txt', 'electrum/wordlist'),
-    (home+'lib/locale', 'electrum/locale'),
-    (home+'plugins', 'electrum_plugins'),
+    (home+'lib/*.json', 'electrum_bcd'),
+    (home+'lib/wordlist/english.txt', 'electrum_bcd/wordlist'),
+    (home+'lib/locale', 'electrum_bcd/locale'),
+    (home+'plugins', 'electrum_bcd_plugins'),
     ('C:\\Program Files (x86)\\ZBar\\bin\\', '.')
 ]
 datas += collect_data_files('trezorlib')
@@ -90,7 +90,7 @@ exe_standalone = EXE(
     a.scripts,
     a.binaries,
     a.datas, 
-    name=os.path.join('build\\pyi.win32\\electrum', cmdline_name + ".exe"),
+    name=os.path.join('build\\pyi.win32\\electrum-bcd', cmdline_name + ".exe"),
     debug=False,
     strip=None,
     upx=False,
@@ -103,7 +103,7 @@ exe_portable = EXE(
     a.scripts,
     a.binaries,
     a.datas + [ ('is_portable', 'README.md', 'DATA' ) ],
-    name=os.path.join('build\\pyi.win32\\electrum', cmdline_name + "-portable.exe"),
+    name=os.path.join('build\\pyi.win32\\electrum-bcd', cmdline_name + "-portable.exe"),
     debug=False,
     strip=None,
     upx=False,
@@ -117,7 +117,7 @@ exe_dependent = EXE(
     pyz,
     a.scripts,
     exclude_binaries=True,
-    name=os.path.join('build\\pyi.win32\\electrum', cmdline_name),
+    name=os.path.join('build\\pyi.win32\\electrum-bcd', cmdline_name),
     debug=False,
     strip=None,
     upx=False,
@@ -134,4 +134,4 @@ coll = COLLECT(
     debug=False,
     icon=home+'icons/electrum_bcd.ico',
     console=False,
-    name=os.path.join('dist', 'electrum'))
+    name=os.path.join('dist', 'electrum-bcd'))
