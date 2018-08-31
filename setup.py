@@ -49,7 +49,7 @@ extras_require['full'] = extras_require['hardware'] + extras_require['fast']
 
 
 setup(
-    name='Electrum BCD',
+    name='Electrum-BCD',
     version=version.ELECTRUM_VERSION,
     install_requires=requirements,
     extras_require=extras_require,

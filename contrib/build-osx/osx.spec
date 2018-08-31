@@ -5,8 +5,8 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules, coll
 import sys
 import os
 
-PACKAGE='Electrum BCD'
-PYPKG='electrum-bcd'
+PACKAGE='Electrum-BCD'
+PYPKG='electrum_bcd'
 MAIN_SCRIPT='electrum-bcd'
 ICONS_FILE='electrum-bcd.icns'
 
